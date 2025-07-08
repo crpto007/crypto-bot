@@ -7,7 +7,7 @@ import requests
 import json
 import matplotlib.pyplot as plt
 import io
-import datetime
+from datetime import time
 from apscheduler.schedulers.background import BackgroundScheduler
 import pytz
 import random
@@ -122,6 +122,7 @@ def schedule_digest(updater):
     ist = pytz.timezone("Asia/Kolkata")
     job_queue.run_daily(send_daily_digest, time=datetime.time(hour=9, minute=0, tzinfo=ist))
 
+    time = time(hour=9, minute=0, tzinfo=ist)
 
 # ----------------------------------------
 # 6️⃣ User Analytics System
