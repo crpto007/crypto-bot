@@ -832,7 +832,6 @@ def graph_command(update, context):
     update.message.reply_photo(photo=buffer)
 def start(update: Update, context: CallbackContext):
     update.message.reply_text("✅ Crypto Bot is live!"
-
 print"✅ Bot is live!"
         "🚀 *Welcome to CryptoTracker Pro* 🚀\n\n"
         "📊 *Your Professional Crypto Analytics Hub*\n"
