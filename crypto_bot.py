@@ -121,7 +121,6 @@ def schedule_digest(updater):
     job_queue = updater.job_queue
     ist = pytz.timezone("Asia/Kolkata")
     job_queue.run_daily(send_daily_digest, time=datetime.time(hour=9, minute=0, tzinfo=ist))
-
     time = time(hour=9, minute=0, tzinfo=ist)
 
 # ----------------------------------------
