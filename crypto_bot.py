@@ -10,7 +10,7 @@ import io
 import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 import pytz
-
+import random
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 from telegram import InlineQueryResultArticle, InputTextMessageContent
 from telegram.ext import InlineQueryHandler, MessageHandler, Filters
@@ -51,6 +51,117 @@ price_history = {}
 alerts_db = {}
 share_link = {}
 user_portfolios = {}
+user_data = {}
+user_stats = {}
+
+
+# ----------------------------------------
+# 2️⃣ Watch & Earn System
+# ----------------------------------------
+def watch_command(update: Update, context: CallbackContext):
+    user_id = str(update.effective_user.id)
+    if len(context.args) < 2:
+        update.message.reply_text("Usage: /watch <coin> <duration in minutes>")
+        return
+
+    coin = context.args[0].lower()
+    try:
+        duration = int(context.args[1])
+    except:
+        update.message.reply_text("Invalid time. Use minutes.")
+        return
+
+    context.job_queue.run_once(send_watch_update, duration * 60, context=(update.effective_chat.id, coin))
+    user_data.setdefault(user_id, {"watch_count": 0})
+    user_data[user_id]["watch_count"] += 1
+
+    update.message.reply_text(f"👀 Watching {coin.upper()} for {duration} min. You'll get an update!")
+
+
+def send_watch_update(context: CallbackContext):
+    chat_id, coin = context.job.context
+    context.bot.send_message(chat_id=chat_id, text=f"🔔 {coin.upper()} watch triggered! Here's your update.")
+
+
+# ----------------------------------------
+# 4️⃣ Button UI Menu
+# ----------------------------------------
+def start(update: Update, context: CallbackContext):
+    keyboard = [
+        [InlineKeyboardButton("💼 My Portfolio", callback_data='portfolio')],
+        [InlineKeyboardButton("🔔 My Alerts", callback_data='alerts')],
+        [InlineKeyboardButton("📈 Trending", callback_data='trending')],
+        [InlineKeyboardButton("🤖 Predict", callback_data='predict')],
+        [InlineKeyboardButton("⚙️ Settings", callback_data='settings')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.message.reply_text("🚀 Welcome to Crypto Bot Pro!", reply_markup=reply_markup)
+
+
+def button_handler(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query.answer()
+    query.edit_message_text(text=f"📍 You selected: {query.data}")
+
+
+# ----------------------------------------
+# 5️⃣ Daily Auto AI Market Digest
+# ----------------------------------------
+def send_daily_digest(context: CallbackContext):
+    text = (
+        "📰 *Daily Crypto Market Digest*\n\n"
+        "BTC: ₹28,00,000 (+2.1%)\nETH: ₹1,80,000 (-1.2%)\nDOGE: ₹7.2 (+0.4%)\n\n"
+        "🤖 AI Insight: \"Bitcoin may remain bullish short-term.\""
+    )
+    for uid in user_data:
+        context.bot.send_message(chat_id=uid, text=text, parse_mode='Markdown')
+
+
+def schedule_digest(updater):
+    job_queue = updater.job_queue
+    ist = pytz.timezone("Asia/Kolkata")
+    job_queue.run_daily(send_daily_digest, time=datetime.time(hour=9, minute=0, tzinfo=ist))
+
+
+# ----------------------------------------
+# 6️⃣ User Analytics System
+# ----------------------------------------
+def my_status_command(update: Update, context: CallbackContext):
+    user_id = str(update.effective_user.id)
+    stats = user_data.get(user_id, {})
+    count = stats.get("watch_count", 0)
+
+    update.message.reply_text(
+        f"📊 *Your Stats:*\n\n👀 Watch Count: {count}\n💬 Commands Used: {stats.get('cmd_count', 0)}",
+        parse_mode='Markdown'
+    )
+
+
+# ----------------------------------------
+# 7️⃣ Crypto Quiz Game
+# ----------------------------------------
+def quiz_command(update: Update, context: CallbackContext):
+    question = "🧠 Clue: I'm the second most valuable crypto after BTC."
+    options = ["Litecoin", "Ethereum", "Dogecoin", "XRP"]
+    correct = "Ethereum"
+
+    keyboard = [
+        [InlineKeyboardButton(opt, callback_data=f"quiz|{opt}|{correct}")] for opt in options
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    update.message.reply_text(question, reply_markup=reply_markup)
+
+
+def quiz_response(update: Update, context: CallbackContext):
+    query = update.callback_query
+    _, selected, correct = query.data.split("|")
+    query.answer()
+
+    if selected == correct:
+        query.edit_message_text("✅ Correct! 🎉")
+    else:
+        query.edit_message_text(f"❌ Wrong. Correct answer was: {correct}")
 
 
 def toggle_auto_reply(update, context):
@@ -1269,12 +1380,8 @@ def coinList_command(update: Update, context: CallbackContext):
         logger.error(f"Coinlist error: {e}")
 
 
-def status_command(update, context):
-    try:
-        update.message.reply_text("✅ Bot is alive!")
-    except Exception as e:
-        print(f"/status error: {e}")
-
+def status(update, context):
+    update.message.reply_text("✅ Bot is *LIVE* and responding correctly!", parse_mode='Markdown')
 
 # Main
 
@@ -1327,10 +1434,18 @@ def main():
         dp.add_handler(CommandHandler("dominance", dominance_command))
         dp.add_handler(CommandHandler("predict", predict_command))
         dp.add_handler(CommandHandler("status", status_command))
+        dp.add_handler(CommandHandler("watch", watch_command))
+        dp.add_handler(CommandHandler("my_status", status_command))
+        dp.add_handler(CommandHandler("quiz", quiz_command))
+        dp.add_handler(CommandHandler("start", start))
+        dp.add_handler(CallbackQueryHandler(button_handler, pattern='^(portfolio|alerts|trending|predict|settings)$'))
+        dp.add_handler(CallbackQueryHandler(quiz_response, pattern='^quiz\|'))
         dp.add_handler(
             MessageHandler(Filters.text & ~Filters.command, auto_reply_handler)
         )
-
+        
+        # ✅ Add this to schedule daily digest
+        schedule_digest(updater)  # ⏰ Sends message daily at 9AM
         print("🤖 Bot starting...")
         updater.start_polling(drop_pending_updates=True)
         print("✅ Bot is running!")
