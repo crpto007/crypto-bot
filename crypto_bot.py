@@ -1441,7 +1441,7 @@ def main():
         dp.add_handler(CommandHandler("predict", predict_command))
         dp.add_handler(CommandHandler("status", status_command))
         dp.add_handler(CommandHandler("watch", watch_command))
-        dp.add_handler(CommandHandler("my_stats", my_stats_command))
+        dp.add_handler(CommandHandler("my_stats", mystats_command))
         dp.add_handler(CommandHandler("quiz", quiz_command))
         dp.add_handler(CommandHandler("start", start))
         dp.add_handler(CallbackQueryHandler(button_handler, pattern='^(portfolio|alerts|trending|predict|settings)$'))
