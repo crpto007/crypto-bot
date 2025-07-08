@@ -1336,7 +1336,5 @@ keep_alive()
     except Exception as e:
         logger.error(f"Error starting bot: {e}")
         print(f"❌ Bot failed to start: {e}")
-
-
 if __name__ == '__main__':
     main()
