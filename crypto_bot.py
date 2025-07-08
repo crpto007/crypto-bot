@@ -126,7 +126,7 @@ def schedule_digest(updater):
 # ----------------------------------------
 # 6️⃣ User Analytics System
 # ----------------------------------------
-def my_status_command(update: Update, context: CallbackContext):
+def user_command(update: Update, context: CallbackContext):
     user_id = str(update.effective_user.id)
     stats = user_data.get(user_id, {})
     count = stats.get("watch_count", 0)
@@ -1435,7 +1435,7 @@ def main():
         dp.add_handler(CommandHandler("predict", predict_command))
         dp.add_handler(CommandHandler("status", status_command))
         dp.add_handler(CommandHandler("watch", watch_command))
-        dp.add_handler(CommandHandler("my_status", status_command))
+        dp.add_handler(CommandHandler("user", user_command))
         dp.add_handler(CommandHandler("quiz", quiz_command))
         dp.add_handler(CommandHandler("start", start))
         dp.add_handler(CallbackQueryHandler(button_handler, pattern='^(portfolio|alerts|trending|predict|settings)$'))
