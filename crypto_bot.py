@@ -1280,14 +1280,19 @@ def status_command(update, context):
 
 
 def main():
-    if 'BOT_TOKEN' not in os.environ:
-        print("❌ BOT_TOKEN environment variable not set!")
-        return
-from keep_alive import keep_alive
-keep_alive()
+    try:
+        if 'BOT_TOKEN' not in os.environ:
+            print("❌ BOT_TOKEN environment variable not set!")
+            return
+
+        from keep_alive import keep_alive
+        keep_alive()
+
+        my_secret = os.environ['BOT_TOKEN']
         updater = Updater(token=my_secret, use_context=True)
         dp = updater.dispatcher
 
+        # Add all your handlers
         dp.add_handler(CommandHandler("start", start))
         dp.add_handler(CommandHandler("share", share))
         dp.add_handler(CommandHandler("help", help_command))
@@ -1322,10 +1327,9 @@ keep_alive()
         dp.add_handler(CommandHandler("dominance", dominance_command))
         dp.add_handler(CommandHandler("predict", predict_command))
         dp.add_handler(CommandHandler("status", status_command))
-
         dp.add_handler(
-            MessageHandler(Filters.text & ~Filters.command,
-                           auto_reply_handler))
+            MessageHandler(Filters.text & ~Filters.command, auto_reply_handler)
+        )
 
         print("🤖 Bot starting...")
         updater.start_polling(drop_pending_updates=True)
@@ -1333,7 +1337,8 @@ keep_alive()
         updater.idle()
 
     except Exception as e:
-        logger.error(f"Error starting bot: {e}")
         print(f"❌ Bot failed to start: {e}")
+
 if __name__ == '__main__':
     main()
+
