@@ -1380,7 +1380,7 @@ def coinList_command(update: Update, context: CallbackContext):
         update.message.reply_text(f"⚠️ Failed to fetch coin list: {str(e)}")
         logger.error(f"Coinlist error: {e}")
         
-        def status_command(update: Update, context: CallbackContext):
+def status_command(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     update.message.reply_text(
         f"✅ Bot is *LIVE* and responding!\n\nYour User ID: `{user_id}`",
