@@ -832,8 +832,7 @@ def graph_command(update, context):
     update.message.reply_photo(photo=buffer)
     
 def start(update: Update, context: CallbackContext):
-    update.message.reply_text("✅ Crypto Bot is live!")
-print("✅ Bot is live!")
+    welcome_text = (
         "🚀 *Welcome to CryptoTracker Pro* 🚀\n\n"
         "📊 *Your Professional Crypto Analytics Hub*\n"
         "━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
@@ -847,9 +846,10 @@ print("✅ Bot is live!")
         "💰 `/portfolio` - Track investments\n"
         "🤖 `/predict bitcoin` - AI predictions\n\n"
         "⚡ Type `/help` for complete feature list\n\n"
-        "💡 *Powered by CoinGecko API & Advanced AI*",
-        parse_mode='Markdown')
+        "💡 *Powered by CoinGecko API & Advanced AI*"
+    )
 
+    update.message.reply_text(welcome_text, parse_mode='Markdown')
 
 # Help Command
 def plot_command(update: Update, context: CallbackContext):
