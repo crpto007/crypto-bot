@@ -126,17 +126,18 @@ def schedule_digest(updater):
 # ----------------------------------------
 # 6️⃣ User Analytics System
 # ----------------------------------------
-def user_command(update: Update, context: CallbackContext):
+def mystats_command(update: Update, context: CallbackContext):
     user_id = str(update.effective_user.id)
     stats = user_data.get(user_id, {})
     count = stats.get("watch_count", 0)
+    cmd_count = stats.get("cmd_count", 0)
 
     update.message.reply_text(
-        f"📊 *Your Stats:*\n\n👀 Watch Count: {count}\n💬 Commands Used: {stats.get('cmd_count', 0)}",
+        f"📊 *Your Stats:*\n\n"
+        f"👀 Watch Count: {count}\n"
+        f"💬 Commands Used: {cmd_count}",
         parse_mode='Markdown'
     )
-
-
 # ----------------------------------------
 # 7️⃣ Crypto Quiz Game
 # ----------------------------------------
@@ -1378,10 +1379,15 @@ def coinList_command(update: Update, context: CallbackContext):
     except Exception as e:
         update.message.reply_text(f"⚠️ Failed to fetch coin list: {str(e)}")
         logger.error(f"Coinlist error: {e}")
+        
+        def status_command(update: Update, context: CallbackContext):
+    user_id = update.effective_user.id
+    update.message.reply_text(
+        f"✅ Bot is *LIVE* and responding!\n\nYour User ID: `{user_id}`",
+        parse_mode='Markdown'
+    )
 
 
-def status(update, context):
-    update.message.reply_text("✅ Bot is *LIVE* and responding correctly!", parse_mode='Markdown')
 
 # Main
 
@@ -1435,7 +1441,7 @@ def main():
         dp.add_handler(CommandHandler("predict", predict_command))
         dp.add_handler(CommandHandler("status", status_command))
         dp.add_handler(CommandHandler("watch", watch_command))
-        dp.add_handler(CommandHandler("user", user_command))
+        dp.add_handler(CommandHandler("my_stats", my_stats_command))
         dp.add_handler(CommandHandler("quiz", quiz_command))
         dp.add_handler(CommandHandler("start", start))
         dp.add_handler(CallbackQueryHandler(button_handler, pattern='^(portfolio|alerts|trending|predict|settings)$'))
