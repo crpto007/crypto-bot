@@ -1283,7 +1283,8 @@ def main():
     if 'BOT_TOKEN' not in os.environ:
         print("❌ BOT_TOKEN environment variable not set!")
         return
-
+from keep_alive import keep_alive
+keep_alive()
     try:
         updater = Updater(token=my_secret, use_context=True)
         dp = updater.dispatcher
