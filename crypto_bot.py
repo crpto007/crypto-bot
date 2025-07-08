@@ -1285,7 +1285,6 @@ def main():
         return
 from keep_alive import keep_alive
 keep_alive()
-    try:
         updater = Updater(token=my_secret, use_context=True)
         dp = updater.dispatcher
 
