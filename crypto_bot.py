@@ -155,7 +155,8 @@ def schedule_digest(updater):
 # ----------------------------------------
 def mystats_command(update: Update, context: CallbackContext):
     track_usage(update)
-    user_id = str(update.effective_user.id)
+    user_id = str(update.effective_user.id)  # ✅ Valid
+    ...
     stats = user_data.get(user_id, {})
     count = stats.get("watch_count", 0)
     cmd_count = stats.get("cmd_count", 0)
