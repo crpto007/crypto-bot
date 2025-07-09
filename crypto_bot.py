@@ -147,23 +147,21 @@ def quiz_command(update: Update, context: CallbackContext):
     correct = "Ethereum"
 
     keyboard = [
-        [InlineKeyboardButton(opt, callback_data=f"quiz|{opt}|{correct}")] for opt in options
+        [InlineKeyboardButton(opt, callback_data=f"quiz|{opt.lower()}|{correct.lower()}")]
+        for opt in options
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-
     update.message.reply_text(question, reply_markup=reply_markup)
-
 
 def quiz_response(update: Update, context: CallbackContext):
     query = update.callback_query
-    _, selected, correct = query.data.split("|")
     query.answer()
+    _, selected, correct = query.data.split("|")
 
     if selected == correct:
         query.edit_message_text("✅ Correct! 🎉")
     else:
-        query.edit_message_text(f"❌ Wrong. Correct answer was: {correct}")
-
+        query.edit_message_text(f"❌ Wrong. Correct answer was: {correct.upper()}")
 
 def toggle_auto_reply(update, context):
     user_id = str(update.effective_user.id)
