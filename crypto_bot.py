@@ -8,8 +8,8 @@ import json
 import matplotlib.pyplot as plt
 import io
 from datetime import time
-from apscheduler.schedulers.background import BackgroundScheduler
 import pytz
+from apscheduler.schedulers.background import BackgroundScheduler
 import random
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 from telegram import InlineQueryResultArticle, InputTextMessageContent
@@ -107,21 +107,21 @@ def button_handler(update: Update, context: CallbackContext):
 # ----------------------------------------
 # 5️⃣ Daily Auto AI Market Digest
 # ----------------------------------------
-def send_daily_digest(context: CallbackContext):
-    text = (
+def send_daily_digest(context):
+    message = (
         "📰 *Daily Crypto Market Digest*\n\n"
         "BTC: ₹28,00,000 (+2.1%)\nETH: ₹1,80,000 (-1.2%)\nDOGE: ₹7.2 (+0.4%)\n\n"
         "🤖 AI Insight: \"Bitcoin may remain bullish short-term.\""
     )
-    for uid in user_data:
-        context.bot.send_message(chat_id=uid, text=text, parse_mode='Markdown')
-
+    for user_id in user_data:
+        context.bot.send_message(chat_id=user_id, text=message, parse_mode='Markdown')
 
 def schedule_digest(updater):
-    job_queue = updater.job_queue
     ist = pytz.timezone("Asia/Kolkata")
-    job_queue.run_daily(send_daily_digest, time=datetime.time(hour=9, minute=0, tzinfo=ist))
-    time = time(hour=9, minute=0, tzinfo=ist)
+    updater.job_queue.run_daily(
+        send_daily_digest,
+        time=time(hour=9, minute=0, tzinfo=ist)
+    )
 
 # ----------------------------------------
 # 6️⃣ User Analytics System
