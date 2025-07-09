@@ -28,6 +28,33 @@ matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 from io import BytesIO
 from datetime import datetime
+quiz_questions = [
+    {
+        "question": "🧠 Q1: What is the second most valuable crypto after BTC?",
+        "options": ["Litecoin", "Ethereum", "Dogecoin", "XRP"],
+        "answer": "Ethereum"
+    },
+    {
+        "question": "🧠 Q2: What does BTC stand for?",
+        "options": ["Bitcash", "BlockTradeCoin", "Bitcoin", "BaseTokenCoin"],
+        "answer": "Bitcoin"
+    },
+    {
+        "question": "🧠 Q3: Which platform is used for smart contracts?",
+        "options": ["Dogecoin", "Ethereum", "Litecoin", "Ripple"],
+        "answer": "Ethereum"
+    },
+    {
+        "question": "🧠 Q4: Which coin has a Shiba Inu as mascot?",
+        "options": ["Dogecoin", "Cardano", "Solana", "Polygon"],
+        "answer": "Dogecoin"
+    },
+    {
+        "question": "🧠 Q5: What is the full form of NFT?",
+        "options": ["Non-Fungible Token", "New Financial Tech", "Next Future Trade", "None"],
+        "answer": "Non-Fungible Token"
+    }
+]
 
 # Logging for errors
 logging.basicConfig(level=logging.INFO)
@@ -59,29 +86,22 @@ user_stats = {}
 # 2️⃣ Watch & Earn System
 # ----------------------------------------
 def watch_command(update: Update, context: CallbackContext):
-    user_id = str(update.effective_user.id)
-    if len(context.args) < 2:
-        update.message.reply_text("Usage: /watch <coin> <duration in minutes>")
-        return
+    user_id = update.effective_user.id
+    chat_id = update.effective_chat.id
 
-    coin = context.args[0].lower()
-    try:
-        duration = int(context.args[1])
-    except:
-        update.message.reply_text("Invalid time. Use minutes.")
-        return
+    context.bot.send_message(chat_id=chat_id, text="👀 Watching... You’ll get a reward soon!")
 
-    context.job_queue.run_once(send_watch_update, duration * 60, context=(update.effective_chat.id, coin))
-    user_data.setdefault(user_id, {"watch_count": 0})
-    user_data[user_id]["watch_count"] += 1
+    # Set job to run after 60 seconds (or whatever)
+    context.job_queue.run_once(
+        callback=finish_watch,
+        when=60,  # seconds
+        context=chat_id
+    )
+def finish_watch(context: CallbackContext):
+    job = context.job
+    chat_id = job.context
 
-    update.message.reply_text(f"👀 Watching {coin.upper()} for {duration} min. You'll get an update!")
-
-
-def send_watch_update(context: CallbackContext):
-    chat_id, coin = context.job.context
-    context.bot.send_message(chat_id=chat_id, text=f"🔔 {coin.upper()} watch triggered! Here's your update.")
-
+    context.bot.send_message(chat_id=chat_id, text="🎉 You've successfully completed watching! You earned 10 coins 💰")
 
 # ----------------------------------------
 # 4️⃣ Button UI Menu
@@ -142,26 +162,60 @@ def mystats_command(update: Update, context: CallbackContext):
 # 7️⃣ Crypto Quiz Game
 # ----------------------------------------
 def quiz_command(update: Update, context: CallbackContext):
-    question = "🧠 Clue: I'm the second most valuable crypto after BTC."
-    options = ["Litecoin", "Ethereum", "Dogecoin", "XRP"]
-    correct = "Ethereum"
+    user_id = str(update.effective_user.id)
+    context.user_data[user_id] = {"score": 0, "current_q": 0}
 
-    keyboard = [
-        [InlineKeyboardButton(opt, callback_data=f"quiz|{opt.lower()}|{correct.lower()}")]
-        for opt in options
+    update.message.reply_text("🎯 Starting Crypto Quiz!")
+    send_quiz_question(update, context, user_id)
+
+def send_quiz_question(update, context, user_id):
+    index = context.user_data[user_id]["current_q"]
+
+    if index >= len(quiz_questions):
+        score = context.user_data[user_id]["score"]
+        context.bot.send_message(
+            chat_id=user_id,
+            text=f"🏁 *Quiz Completed!*\n\nYour Final Score: *{score}/{len(quiz_questions)}*",
+            parse_mode='Markdown'
+        )
+        return
+
+    q = quiz_questions[index]
+    buttons = [
+        [InlineKeyboardButton(opt, callback_data=f"quiz|{opt}|{q['answer']}|{index}")]
+        for opt in q["options"]
     ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text(question, reply_markup=reply_markup)
+    reply_markup = InlineKeyboardMarkup(buttons)
+
+    context.bot.send_message(
+        chat_id=user_id,
+        text=q["question"],
+        reply_markup=reply_markup
+    )
 
 def quiz_response(update: Update, context: CallbackContext):
     query = update.callback_query
     query.answer()
-    _, selected, correct = query.data.split("|")
 
-    if selected == correct:
-        query.edit_message_text("✅ Correct! 🎉")
-    else:
-        query.edit_message_text(f"❌ Wrong. Correct answer was: {correct.upper()}")
+    try:
+        prefix, selected, correct, index = query.data.split("|")
+        user_id = str(query.from_user.id)
+
+        if selected == correct:
+            context.user_data[user_id]["score"] += 1
+            reply = "✅ Correct!"
+        else:
+            reply = f"❌ Wrong! Correct answer: *{correct}*"
+
+        context.user_data[user_id]["current_q"] += 1
+        query.edit_message_text(reply, parse_mode='Markdown')
+
+        # Send next question
+        send_quiz_question(query, context, user_id)
+
+    except Exception as e:
+        query.edit_message_text("⚠️ Error occurred in quiz.")
+        print(f"[Quiz Error] {e}")
 
 def toggle_auto_reply(update, context):
     user_id = str(update.effective_user.id)
