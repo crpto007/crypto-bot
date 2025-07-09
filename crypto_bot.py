@@ -1449,9 +1449,8 @@ def main():
         dp.add_handler(
             MessageHandler(Filters.text & ~Filters.command, auto_reply_handler)
         )
-        
-        # ✅ Add this to schedule daily digest
         schedule_digest(updater)  # ⏰ Sends message daily at 9AM
+        
         print("🤖 Bot starting...")
         updater.start_polling(drop_pending_updates=True)
         print("✅ Bot is running!")
