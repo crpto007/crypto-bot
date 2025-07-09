@@ -961,7 +961,17 @@ def start(update: Update, context: CallbackContext):
         "💡 *Powered by CoinGecko API & Advanced AI*"
     )
 
+    keyboard = [
+        [InlineKeyboardButton("💼 My Portfolio", callback_data='portfolio')],
+        [InlineKeyboardButton("🔔 My Alerts", callback_data='alerts')],
+        [InlineKeyboardButton("📈 Trending", callback_data='trending')],
+        [InlineKeyboardButton("🤖 Predict", callback_data='predict')],
+        [InlineKeyboardButton("⚙️ Settings", callback_data='settings')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
     update.message.reply_text(welcome_text, parse_mode='Markdown')
+    update.message.reply_text("👇 Choose an option:", reply_markup=reply_markup)
 
 # Help Command
 def plot_command(update: Update, context: CallbackContext):
