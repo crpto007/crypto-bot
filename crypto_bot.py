@@ -28,6 +28,32 @@ matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 from io import BytesIO
 from datetime import datetime
+
+
+# Logging for errors
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Bot Token
+my_secret = os.environ['BOT_TOKEN']
+
+# Scheduler
+scheduler = BackgroundScheduler(timezone=utc)
+scheduler.start()
+btc_job = None
+
+# Start Command
+
+user_watchlist = {}
+auto_reply_users = set()
+user_alerts = {}
+real_time_graphs = {}
+price_history = {}
+alerts_db = {}
+share_link = {}
+user_portfolios = {}
+user_data = {}
+user_stats = {}
 quiz_questions = [
     {
         "question": "🧠 Q1: What is the second most valuable crypto after BTC?",
@@ -55,37 +81,12 @@ quiz_questions = [
         "answer": "Non-Fungible Token"
     }
 ]
-
-# Logging for errors
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Bot Token
-my_secret = os.environ['BOT_TOKEN']
-
-# Scheduler
-scheduler = BackgroundScheduler(timezone=utc)
-scheduler.start()
-btc_job = None
-
-# Start Command
-
-user_watchlist = {}
-auto_reply_users = set()
-user_alerts = {}
-real_time_graphs = {}
-price_history = {}
-alerts_db = {}
-share_link = {}
-user_portfolios = {}
-user_data = {}
-user_stats = {}
 def track_usage(update):
+    if update is None:
+        return
     user_id = str(update.effective_user.id)
-
     if user_id not in user_data:
         user_data[user_id] = {"watch_count": 0, "cmd_count": 0}
-
     user_data[user_id]["cmd_count"] += 1
 # ----------------------------------------
 # 2️⃣ Watch & Earn System
@@ -125,6 +126,7 @@ def start(update: Update, context: CallbackContext):
 
 
 def button_handler(update: Update, context: CallbackContext):
+    track_usage(update)
     query = update.callback_query
     query.answer()
     query.edit_message_text(text=f"📍 You selected: {query.data}")
