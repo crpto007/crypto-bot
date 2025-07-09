@@ -135,7 +135,6 @@ def button_handler(update: Update, context: CallbackContext):
 # 5️⃣ Daily Auto AI Market Digest
 # ----------------------------------------
 def send_daily_digest(context):
-    track_usage(update)
     message = (
         "📰 *Daily Crypto Market Digest*\n\n"
         "BTC: ₹28,00,000 (+2.1%)\nETH: ₹1,80,000 (-1.2%)\nDOGE: ₹7.2 (+0.4%)\n\n"
@@ -145,7 +144,6 @@ def send_daily_digest(context):
         context.bot.send_message(chat_id=user_id, text=message, parse_mode='Markdown')
 
 def schedule_digest(updater):
-    track_usage(update)
     ist = pytz.timezone("Asia/Kolkata")
     updater.job_queue.run_daily(
         send_daily_digest,
@@ -806,7 +804,6 @@ def share(update, context):
 
 
 def get_price_with_logo(coin):
-    track_usage(update)
     try:
         # First try direct coin ID search
         url = f"https://api.coingecko.com/api/v3/coins/{coin}"
@@ -903,7 +900,6 @@ def inline_query(update, context):
 
 
 def real_time_graph(update, context):
-    track_usage(update)
     if not context.args:
         update.message.reply_text("Usage: /realtimegraph bitcoin")
         return
@@ -1147,7 +1143,6 @@ def help_command(update: Update, context: CallbackContext):
 
 
 def get_price(coin):
-    track_usage(update)
     try:
         coin = coin.strip().lower()
 
@@ -1275,7 +1270,6 @@ def fancy_command(update: Update, context: CallbackContext):
 
 
 def get_btc_price():
-    track_usage(update)
     url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=inr'
     response = requests.get(url)
     data = response.json()
