@@ -125,11 +125,9 @@ def start(update: Update, context: CallbackContext):
 
 
 def button_handler(update: Update, context: CallbackContext):
-    track_usage(update)
     query = update.callback_query
     query.answer()
     query.edit_message_text(text=f"📍 You selected: {query.data}")
-
 
 # ----------------------------------------
 # 5️⃣ Daily Auto AI Market Digest
