@@ -54,6 +54,7 @@ share_link = {}
 user_portfolios = {}
 user_data = {}
 user_stats = {}
+
 quiz_questions = [
     {
         "question": "🧠 Q1: What is the second most valuable crypto after BTC?",
@@ -93,7 +94,6 @@ def track_usage(update):
 # ----------------------------------------
 def watch_command(update: Update, context: CallbackContext):
       # Add this line
-
     user_id = str(update.effective_user.id)
     user_data[user_id]["watch_count"] += 1  # Increment watch count
 
@@ -103,7 +103,6 @@ def watch_command(update: Update, context: CallbackContext):
     context.job_queue.run_once(finish_watch, 60, context=chat_id)
 
 def finish_watch(context: CallbackContext):
-    
     job = context.job
     chat_id = job.context
 
@@ -112,21 +111,10 @@ def finish_watch(context: CallbackContext):
 # ----------------------------------------
 # 4️⃣ Button UI Menu
 # ----------------------------------------
-def start(update: Update, context: CallbackContext):
-    
-    keyboard = [
-        [InlineKeyboardButton("💼 My Portfolio", callback_data='portfolio')],
-        [InlineKeyboardButton("🔔 My Alerts", callback_data='alerts')],
-        [InlineKeyboardButton("📈 Trending", callback_data='trending')],
-        [InlineKeyboardButton("🤖 Predict", callback_data='predict')],
-        [InlineKeyboardButton("⚙️ Settings", callback_data='settings')]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text("🚀 Welcome to Crypto Bot Pro!", reply_markup=reply_markup)
+
 
 
 def button_handler(update: Update, context: CallbackContext):
-    
     query = update.callback_query
     query.answer()
     query.edit_message_text(text=f"📍 You selected: {query.data}")
@@ -170,7 +158,6 @@ def mystats_command(update: Update, context: CallbackContext):
 # 7️⃣ Crypto Quiz Game
 # ----------------------------------------
 def quiz_command(update: Update, context: CallbackContext):
-    
     user_id = str(update.effective_user.id)
     context.user_data[user_id] = {"score": 0, "current_q": 0}
 
@@ -178,7 +165,6 @@ def quiz_command(update: Update, context: CallbackContext):
     send_quiz_question(update, context, user_id)
 
 def send_quiz_question(update, context, user_id):
-    
     index = context.user_data[user_id]["current_q"]
 
     if index >= len(quiz_questions):
@@ -204,7 +190,6 @@ def send_quiz_question(update, context, user_id):
     )
 
 def quiz_response(update: Update, context: CallbackContext):
-    
     query = update.callback_query
     query.answer()
 
@@ -229,7 +214,6 @@ def quiz_response(update: Update, context: CallbackContext):
         print(f"[Quiz Error] {e}")
 
 def toggle_auto_reply(update, context):
-    
     user_id = str(update.effective_user.id)
     if user_id in auto_reply_users:
         auto_reply_users.remove(user_id)
@@ -241,7 +225,6 @@ def toggle_auto_reply(update, context):
 
 
 def auto_reply_handler(update, context):
-    
     user_id = str(update.effective_user.id)
     if user_id not in auto_reply_users:
         return
@@ -259,7 +242,6 @@ def auto_reply_handler(update, context):
 
 
 def add_watch(update, context):
-    
     user_id = str(update.effective_user.id)
     if not context.args:
         update.message.reply_text("Usage: /addwatch bitcoin")
@@ -272,7 +254,6 @@ def add_watch(update, context):
 
 
 def view_watchlist(update, context):
-    
     user_id = str(update.effective_user.id)
     coins = user_watchlist.get(user_id, set())
 
@@ -288,7 +269,6 @@ def view_watchlist(update, context):
 
 
 def ai_news_summary(update, context):
-    
     if not context.args:
         update.message.reply_text("Usage: /ainews bitcoin")
         return
@@ -344,7 +324,6 @@ def ai_news_summary(update, context):
 
 
 def market_sentiment(update, context):
-    
     try:
         # Get Fear & Greed Index
         fear_greed_url = "https://api.alternative.me/fng/"
@@ -395,7 +374,6 @@ def market_sentiment(update, context):
 
 
 def chatgpt_auto_reply(update, context):
-    
     """AI-powered auto-reply for crypto questions"""
     user_id = str(update.effective_user.id)
 
@@ -409,7 +387,6 @@ def chatgpt_auto_reply(update, context):
 
 
 def ai_question_handler(update, context):
-    
     """Handle crypto questions with AI responses"""
     user_id = str(update.effective_user.id)
     if user_id not in auto_reply_users:
@@ -451,7 +428,6 @@ def ai_question_handler(update, context):
 
 
 def airdrops_command(update, context):
-    
     """Show active airdrops and opportunities"""
     try:
         airdrops_info = """
@@ -498,14 +474,7 @@ def airdrops_command(update, context):
     except Exception as e:
         update.message.reply_text(f"❌ Error fetching airdrops: {str(e)}")
 
-
-# Portfolio tracking
-user_portfolios = {}
-user_portfolios = {}
-
-
 def portfolio_command(update, context):
-    
     user_id = str(update.effective_user.id)
 
     if len(context.args) == 0:
@@ -614,7 +583,6 @@ def portfolio_command(update, context):
 
 
 def dominance_command(update, context):
-    
     """Show market dominance data"""
     try:
         # Get global market data
@@ -676,7 +644,6 @@ def dominance_command(update, context):
 
 
 def predict_command(update, context):
-    
     """AI-powered price prediction based on technical indicators"""
     if not context.args:
         update.message.reply_text("Usage: /predict bitcoin")
@@ -796,7 +763,6 @@ Always do your own research (DYOR)!
 
 
 def share(update, context):
-    
     bot_username = "@mycryptotracker007_bot"
     share_link = f"https://t.me/{bot_username}?start"
     update.message.reply_text(f"🔗 Share this bot:\n{share_link}")
@@ -855,7 +821,6 @@ def get_price_with_logo(coin):
 
 
 def logo_price_command(update, context):
-    
     if len(context.args) == 0:
         update.message.reply_text("Usage: /logoprice bitcoin\n"
                                   "💡 You can search by:\n"
@@ -976,7 +941,6 @@ def real_time_graph(update, context):
 
 
 def stop_real_time_graph(update, context):
-    
     if not context.args:
         update.message.reply_text("Usage: /stopgraph bitcoin")
         return
@@ -993,7 +957,6 @@ def stop_real_time_graph(update, context):
 
 
 def graph_command(update, context):
-    
     if len(context.args) == 0:
         update.message.reply_text("Usage: /graph bitcoin")
         return
@@ -1024,7 +987,6 @@ def graph_command(update, context):
     update.message.reply_photo(photo=buffer)
     
 def start(update: Update, context: CallbackContext):
-    
     welcome_text = (
         "🚀 *Welcome to CryptoTracker Pro* 🚀\n\n"
         "📊 *Your Professional Crypto Analytics Hub*\n"
@@ -1056,13 +1018,11 @@ def start(update: Update, context: CallbackContext):
 
 # Help Command
 def plot_command(update: Update, context: CallbackContext):
-    
     update.message.reply_text("Generating price plot...")
     send_price_plot(update, context)
 
 
 def send_price_plot(update: Update, context: CallbackContext):
-   
     try:
         # Get actual price data
         coins = ['Bitcoin', 'Ethereum', 'Dogecoin']
@@ -1104,7 +1064,6 @@ def send_price_plot(update: Update, context: CallbackContext):
 
 
 def help_command(update: Update, context: CallbackContext):
-    
     help_text = ("📋 *CryptoTracker Pro - Command Center*\n"
                  "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
                  "🤖 *AI-POWERED ANALYTICS*\n"
@@ -1144,7 +1103,6 @@ def help_command(update: Update, context: CallbackContext):
 def get_price(coin):
     try:
         coin = coin.strip().lower()
-
         # Get comprehensive data for professional display
         url = f"https://api.coingecko.com/api/v3/coins/{coin}"
         response = requests.get(url, timeout=10)
@@ -1192,7 +1150,6 @@ def get_price(coin):
 
 
 def price(update: Update, context: CallbackContext):
-    
     if len(context.args) == 0:
         update.message.reply_text(
             "❌ Please provide a coin name like bitcoin or ethereum.")
@@ -1206,17 +1163,14 @@ def price(update: Update, context: CallbackContext):
 
 
 def btc_command(update: Update, context: CallbackContext):
-    
     update.message.reply_text(get_price('bitcoin'))
 
 
 def eth_command(update: Update, context: CallbackContext):
-    
     update.message.reply_text(get_price('ethereum'))
 
 
 def doge_command(update: Update, context: CallbackContext):
-    
     update.message.reply_text(get_price('dogecoin'))
 
 
@@ -1224,7 +1178,6 @@ def doge_command(update: Update, context: CallbackContext):
 
 
 def price_buttons(update: Update, context: CallbackContext):
-    
     keyboard = [[
         InlineKeyboardButton("Bitcoin 💰", callback_data='bitcoin'),
         InlineKeyboardButton("Ethereum ⚡", callback_data='ethereum'),
@@ -1235,7 +1188,6 @@ def price_buttons(update: Update, context: CallbackContext):
 
 
 def button_handler(update: Update, context: CallbackContext):
-    
     query = update.callback_query
     coin = query.data
     query.answer()
@@ -1246,7 +1198,6 @@ def button_handler(update: Update, context: CallbackContext):
 
 
 def fancy_command(update: Update, context: CallbackContext):
-    
     if context.args:
         coin = context.args[0].strip().lower()
         try:
@@ -1276,12 +1227,10 @@ def get_btc_price():
 
 
 def auto_btc(update: Update, context: CallbackContext):
-    
     global btc_job
     chat_id = update.effective_chat.id  # Get the chat ID of the user who sent the command
 
     def send_btc_price():
-        
         try:
             price = get_btc_price()
             context.bot.send_message(chat_id=chat_id,
@@ -1301,7 +1250,6 @@ alerts_db = {}  # GLOBAL dictionary
 
 
 def set_alert(update, context):
-    
     user_id = str(update.effective_user.id)
 
     if len(context.args) != 3:
@@ -1334,7 +1282,6 @@ def set_alert(update, context):
 
 
 def view_alerts(update, context):
-    
     user_id = str(update.effective_user.id)
     alerts = alerts_db.get(user_id, [])
 
@@ -1350,7 +1297,6 @@ def view_alerts(update, context):
 
 
 def remove_alert(update, context):
-    
     user_id = str(update.effective_user.id)
 
     if len(context.args) != 1:
@@ -1374,7 +1320,6 @@ def remove_alert(update, context):
 
 
 def stop_btc(update: Update, context: CallbackContext):
-    
     global btc_job
     if btc_job:
         btc_job.remove()
@@ -1388,7 +1333,6 @@ def stop_btc(update: Update, context: CallbackContext):
 
 
 def trending_command(update: Update, context: CallbackContext):
-    
     try:
         # Get real trending coins from CoinGecko
         trending_url = "https://api.coingecko.com/api/v3/search/trending"
@@ -1453,7 +1397,6 @@ def trending_command(update: Update, context: CallbackContext):
 
 
 def coinList_command(update: Update, context: CallbackContext):
-    
     try:
         # Get top 20 coins by market cap with prices
         url = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=inr&order=market_cap_desc&per_page=20&page=1"
@@ -1490,7 +1433,6 @@ def coinList_command(update: Update, context: CallbackContext):
         logger.error(f"Coinlist error: {e}")
         
 def status_command(update: Update, context: CallbackContext):
-    
     user_id = update.effective_user.id
     update.message.reply_text(
         f"✅ Bot is *LIVE* and responding!\n\nYour User ID: `{user_id}`",
