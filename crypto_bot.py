@@ -472,7 +472,7 @@ def airdrops_command(update, context):
         update.message.reply_text(f"❌ Error fetching airdrops: {str(e)}")
 def portfolio_command(update, context):
     user_id = str(update.effective_user.id)
-
+    ensure_user_data(user_id)
     if user_id not in user_portfolios or not user_portfolios[user_id]:
         update.message.reply_text(
             "📊 *YOUR CRYPTO PORTFOLIO*\n\n💼 Portfolio is empty!\n\n"
