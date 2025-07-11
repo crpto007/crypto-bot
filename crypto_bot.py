@@ -213,16 +213,18 @@ def quiz_response(update: Update, context: CallbackContext):
         query.edit_message_text("⚠️ Error occurred in quiz.")
         print(f"[Quiz Error] {e}")
 
-def toggle_auto_reply(update, context):
+def enable_auto_reply(update, context):
+    user_id = str(update.effective_user.id)
+    auto_reply_users.add(user_id)
+    update.message.reply_text("🔔 Auto price reply enabled! Type any coin name.")
+
+def disable_auto_reply(update, context):
     user_id = str(update.effective_user.id)
     if user_id in auto_reply_users:
         auto_reply_users.remove(user_id)
         update.message.reply_text("🔕 Auto price reply disabled.")
     else:
-        auto_reply_users.add(user_id)
-        update.message.reply_text(
-            "🔔 Auto price reply enabled! Just type any coin name.")
-
+        update.message.reply_text("⚠️ Auto reply is not enabled.")
 
 def auto_reply_handler(update, context):
     user_id = str(update.effective_user.id)
@@ -231,15 +233,16 @@ def auto_reply_handler(update, context):
 
     text = update.message.text.lower().strip()
 
-    # First check if it's a question for AI response
-    ai_question_handler(update, context)
-
-    # Then check if it's a potential coin name (no spaces, alphabetic)
+    # Reply only to valid single-word coin names
     if text.isalpha() and len(text) > 2:
         price_info = get_price(text)
         if "not found" not in price_info and "Error" not in price_info:
-            update.message.reply_text(f"💰 {price_info}")
+            update.message.reply_text(f"💰 {price_info}", parse_mode='Markdown')
+            return
 
+    # Optional: allow AI question replies after coin check
+    if '?' in text or text.endswith("please"):
+        ai_question_handler(update, context)
 
 def add_watch(update, context):
     user_id = str(update.effective_user.id)
@@ -1549,7 +1552,8 @@ def main():
         dp.add_handler(InlineQueryHandler(inline_query))
         dp.add_handler(CommandHandler("addwatch", add_watch))
         dp.add_handler(CommandHandler("watchlist", view_watchlist))
-        dp.add_handler(CommandHandler("autoreply", toggle_auto_reply))
+        dp.add_handler(CommandHandler("autoreply", enable_auto_reply))
+        dp.add_handler(CommandHandler("stopautoreply", disable_auto_reply))
         dp.add_handler(CommandHandler("realtimegraph", real_time_graph))
         dp.add_handler(CommandHandler("stopgraph", stop_real_time_graph))
         dp.add_handler(CommandHandler("setalert", set_alert))
@@ -1570,9 +1574,7 @@ def main():
         dp.add_handler(CommandHandler("quiz", quiz_command))
         dp.add_handler(CallbackQueryHandler(quiz_response, pattern="^quiz\\|"))
         dp.add_handler(CallbackQueryHandler(button_handler, pattern='^(portfolio|alerts|trending|predict|settings)$'))
-        dp.add_handler(
-            MessageHandler(Filters.text & ~Filters.command, auto_reply_handler)
-        )
+        dp.add_handler(MessageHandler(Filters.text & ~Filters.command, auto_reply_handler))
         schedule_digest(updater)  # ⏰ Sends message daily at 9AM
         print("🤖 Bot starting...")
         updater.start_polling(drop_pending_updates=True)
