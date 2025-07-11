@@ -1015,6 +1015,24 @@ def start(update: Update, context: CallbackContext):
 
     update.message.reply_text(welcome_text, parse_mode='Markdown')
     update.message.reply_text("👇 Choose an option:", reply_markup=reply_markup)
+def button_handler(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query.answer()
+
+    data = query.data
+
+    if data == 'portfolio':
+        query.edit_message_text("📊 Opening your portfolio... (use /portfolio command)")
+    elif data == 'alerts':
+        query.edit_message_text("🔔 Opening your alerts... (use /viewalerts)")
+    elif data == 'trending':
+        query.edit_message_text("📈 Fetching trending coins... (use /trending)")
+    elif data == 'predict':
+        query.edit_message_text("🤖 AI prediction feature... (use /predict bitcoin)")
+    elif data == 'settings':
+        query.edit_message_text("⚙️ Settings coming soon!")
+    else:
+        query.edit_message_text("❓ Unknown selection.")
 
 # Help Command
 def plot_command(update: Update, context: CallbackContext):
