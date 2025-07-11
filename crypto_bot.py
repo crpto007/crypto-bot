@@ -1032,32 +1032,33 @@ def start(update: Update, context: CallbackContext):
     update.message.reply_text(welcome_text, parse_mode='Markdown')
     update.message.reply_text("👇 Choose an option:", reply_markup=reply_markup)
     
-def auto_reply_handler(update, context):
-    # 🛑 Ignore non-text updates (like button presses)
-    if not update.message or not update.message.text:
-        return
+def button_handler(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query.answer()
+    data = query.data
 
-    user_id = str(update.effective_user.id)
-    if user_id not in auto_reply_users:
-        return
+    if data == 'portfolio':
+        query.edit_message_text("📊 Opening your portfolio...")
+        portfolio_command(update, context)  # You must define this
 
-    text = update.message.text.lower().strip()
+    elif data == 'alerts':
+        query.edit_message_text("🔔 Showing your alerts...")
+        view_alerts_command(update, context)  # You must define this
 
-    # ❌ Ignore button keywords like settings, portfolio, etc.
-    ignore_words = ["settings", "portfolio", "alerts", "predict", "trending"]
-    if text in ignore_words:
-        return
+    elif data == 'trending':
+        query.edit_message_text("📈 Fetching trending coins...")
+        trending_command(update, context)
 
-    # 💰 Auto price reply
-    if text.isalpha() and len(text) > 2:
-        price_info = get_price(text)
-        if "not found" not in price_info and "Error" not in price_info:
-            update.message.reply_text(f"💰 {price_info}", parse_mode='Markdown')
-            return
+    elif data == 'predict':
+        query.edit_message_text("🤖 AI is predicting BTC...")
+        context.args = ["bitcoin"]
+        predict_command(update, context)  # You must define this
 
-    # 🤖 If user types a question
-    if "?" in text or any(w in text for w in ['what', 'how', 'why', 'when']):
-        ai_question_handler(update, context)
+    elif data == 'settings':
+        query.edit_message_text("⚙️ Settings feature coming soon!")
+
+    else:
+        query.edit_message_text("❓ Unknown selection.")
 
 
 # Help Command
