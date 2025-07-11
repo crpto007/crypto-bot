@@ -1031,24 +1031,39 @@ def start(update: Update, context: CallbackContext):
 
     update.message.reply_text(welcome_text, parse_mode='Markdown')
     update.message.reply_text("👇 Choose an option:", reply_markup=reply_markup)
+    
 def button_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     query.answer()
 
     data = query.data
+    user_id = query.from_user.id
+
+    # Wrap callback query as fake update for command functions
+    fake_update = Update(update.update_id, message=query.message)
 
     if data == 'portfolio':
-        query.edit_message_text("📊 Opening your portfolio... (use /portfolio command)")
+        context.bot.send_message(chat_id=user_id, text="📊 Loading your portfolio...")
+        portfolio_command(fake_update, context)
+
     elif data == 'alerts':
-        query.edit_message_text("🔔 Opening your alerts... (use /viewalerts)")
+        context.bot.send_message(chat_id=user_id, text="🔔 Showing your alerts...")
+        view_alerts_command(fake_update, context)
+
     elif data == 'trending':
-        query.edit_message_text("📈 Fetching trending coins... (use /trending)")
+        context.bot.send_message(chat_id=user_id, text="📈 Fetching trending coins...")
+        trending_command(fake_update, context)
+
     elif data == 'predict':
-        query.edit_message_text("🤖 AI prediction feature... (use /predict bitcoin)")
+        context.bot.send_message(chat_id=user_id, text="🤖 Predicting with AI...")
+        context.args = ["bitcoin"]  # default coin if no user input
+        predict_command(fake_update, context)
+
     elif data == 'settings':
-        query.edit_message_text("⚙️ Settings coming soon!")
+        context.bot.send_message(chat_id=user_id, text="⚙️ Settings feature coming soon!")
+
     else:
-        query.edit_message_text("❓ Unknown selection.")
+        context.bot.send_message(chat_id=user_id, text="❓ Unknown option selected.")
 
 # Help Command
 def plot_command(update: Update, context: CallbackContext):
@@ -1538,7 +1553,7 @@ def main():
         dp.add_handler(CommandHandler("removewatch", remove_watch))
         dp.add_handler(CommandHandler("quiz", quiz_command))
         dp.add_handler(CallbackQueryHandler(quiz_response, pattern="^quiz\|"))
-        dp.add_handler(CallbackQueryHandler(button_handler, pattern='^(portfolio|alerts|trending|predict|settings)$'))
+        dp.add_handler(CallbackQueryHandler(button_handler))
         dp.add_handler(MessageHandler(Filters.text & ~Filters.command, auto_reply_handler))
         schedule_digest(updater)  # ⏰ Sends message daily at 9AM
         print("🤖 Bot starting...")
