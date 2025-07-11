@@ -5,3 +5,5 @@ requests
 matplotlib
 apscheduler
 pytz
+openai
+python-dotenv
