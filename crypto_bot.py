@@ -1379,29 +1379,28 @@ def stop_btc(update: Update, context: CallbackContext):
 
 def trending_command(update: Update, context: CallbackContext):
     try:
-        # Get real trending coins from CoinGecko
+        # Step 1: Get real trending coins from CoinGecko
         trending_url = "https://api.coingecko.com/api/v3/search/trending"
         trending_response = requests.get(trending_url, timeout=15)
 
         if trending_response.status_code == 200:
             trending_data = trending_response.json()
             all_ids = [coin['item']['id'] for coin in trending_data['coins']]
-# Filter out known problematic or empty IDs
-trending_coins = [cid for cid in all_ids if cid not in ('', None)]
+            trending_coins = [cid for cid in all_ids if cid not in ('', None)]
         else:
-            # Fallback to top coins
-            trending_coins = [
-                'bitcoin', 'ethereum', 'tether', 'binancecoin', 'solana'
-            ]
+            # fallback coins if API fails
+            trending_coins = ['bitcoin', 'ethereum', 'tether', 'binancecoin', 'solana']
+
+        # Final fallback if still empty
         if not trending_coins:
-    trending_coins = ['bitcoin', 'ethereum', 'tether', 'binancecoin', 'solana']
-        # Get detailed market data
+            trending_coins = ['bitcoin', 'ethereum', 'tether', 'binancecoin', 'solana']
+
+        # Step 2: Fetch market data for top trending coins
         url = f"https://api.coingecko.com/api/v3/coins/markets?vs_currency=inr&ids={','.join(trending_coins)}&order=market_cap_desc&per_page=5&page=1"
         response = requests.get(url, timeout=15)
 
         if response.status_code != 200:
-            update.message.reply_text(
-                "📊 Market data temporarily unavailable. Please try again.")
+            update.message.reply_text("📊 Market data temporarily unavailable. Please try again.")
             return
 
         coins = response.json()
@@ -1416,7 +1415,7 @@ trending_coins = [cid for cid in all_ids if cid not in ('', None)]
             change_24h = coin['price_change_percentage_24h'] or 0
             market_cap = coin['market_cap']
 
-            # Professional icons and formatting
+            # formatting
             trend_icon = "🚀" if change_24h > 5 else "📈" if change_24h > 0 else "📉" if change_24h < -5 else "📊"
             change_color = "🟢" if change_24h > 0 else "🔴" if change_24h < 0 else "⚪"
 
@@ -1430,14 +1429,10 @@ trending_coins = [cid for cid in all_ids if cid not in ('', None)]
         update.message.reply_text(reply, parse_mode='Markdown')
 
     except requests.exceptions.Timeout:
-        update.message.reply_text(
-            "⏱️ Market data loading... Please try again in a moment.")
+        update.message.reply_text("⏱️ Market data loading... Please try again in a moment.")
     except Exception as e:
-        update.message.reply_text(
-            "📊 Unable to fetch trending data. Market may be experiencing high volatility."
-        )
-        logger.error(f"Trending command error: {e}")
-
+        update.message.reply_text("📊 Unable to fetch trending data. Market may be experiencing high volatility.")
+        print(f"[trending_command error] {e}")
 
 # Coin List
 
