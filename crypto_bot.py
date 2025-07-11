@@ -442,49 +442,37 @@ def ai_question_handler(update, context):
         print(f"OpenAI Error: {e}")
 
 def airdrops_command(update, context):
-    """Show active airdrops and opportunities"""
+    """Show active & legitimate airdrops with links"""
     try:
         airdrops_info = """
-🪂 *ACTIVE AIRDROPS & OPPORTUNITIES*
+🪂 *✅ ACTIVE & LEGIT AIRDROPS*
 
-🔥 *Current Hot Airdrops:*
+1️⃣ **Blast Network**  
+🔗 [Claim on Blast](https://blast.com/)  
+• Deposit ETH/USDC on Blast to earn tokens + yield.
 
-🌟 **LayerZero (ZRO)**
-• Status: Live on exchanges
-• How: Bridge between chains on LayerZero protocols
-• Reward: Up to $1000+ per wallet
+2️⃣ **Polygon zkEVM Testnet**  
+🔗 [zkEVM Guide & Bridge](https://polygon.technology/polygon-zkevm)  
+• Use devnets/DApps and bridge via official portal to qualify.
 
-💎 **Blast Network**
-• Status: Points system active
-• How: Deposit ETH/USDB on Blast.io
-• Reward: Blast tokens + yield
+3️⃣ **Hyperlane (HYPER)**  
+🔗 [Hyperlane Claim](https://twitter.com/0xPolygon/status/1911474150436380821)  
+• Polygon & zkEVM users can pre-claim ~707k HYPER tokens :contentReference[oaicite:1]{index=1}
 
-🚀 **zkSync Era**
-• Status: Rumored airdrop
-• How: Use zkSync Era DEXs and bridges
-• Reward: ZK tokens (speculative)
+4️⃣ **Fragmetric Airdrop**  
+🔗 [Fragmetric Info](https://dropstab.com/activities)  
+• Active since Jun 27, 2025 – complete quests to claim :contentReference[oaicite:2]{index=2}
 
-⭐ **Arbitrum Odyssey**
-• Status: Ongoing
-• How: Complete tasks on Arbitrum
-• Reward: NFTs + potential tokens
+---
 
-🎯 **Polygon zkEVM**
-• Status: Testnet rewards
-• How: Use Polygon zkEVM testnet
-• Reward: Early adopter rewards
+⚠️ *Security First:*  
+‑ Never share private keys  
+‑ Use a fresh wallet for airdrops  
+‑ Verify official websites only  
 
-⚠️ *SAFETY TIPS:*
-• Never share private keys
-• Always verify official channels
-• Start with small amounts
-• Do your own research (DYOR)
-
-💡 Use /portfolio to track your airdrop earnings!
+💡 Track your airdrop rewards with `/portfolio`.
         """
-
-        update.message.reply_text(airdrops_info, parse_mode='Markdown')
-
+        update.message.reply_text(airdrops_info, parse_mode='Markdown', disable_web_page_preview=True)
     except Exception as e:
         update.message.reply_text(f"❌ Error fetching airdrops: {str(e)}")
 
