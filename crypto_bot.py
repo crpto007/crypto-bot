@@ -1,7 +1,5 @@
 import os
 import logging
-import openai
-openai.api_key = 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
 from telegram.error import Conflict
@@ -30,7 +28,7 @@ matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 from io import BytesIO
 from datetime import datetime
-
+import openai
 
 # Logging for errors
 logging.basicConfig(level=logging.INFO)
