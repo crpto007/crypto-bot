@@ -873,7 +873,6 @@ def real_time_graph(update, context):
     chat_id = update.effective_chat.id
 
     def update_graph():
-        track_usage(update)
         try:
             url = f"https://api.coingecko.com/api/v3/coins/{coin}/market_chart?vs_currency=inr&days=1"
             response = requests.get(url, timeout=10)
@@ -1204,12 +1203,13 @@ def price_buttons(update: Update, context: CallbackContext):
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.message.reply_text('Select a coin:', reply_markup=reply_markup)
 
-
 def button_handler(update: Update, context: CallbackContext):
     query = update.callback_query
-    coin = query.data
+    coin = query.data.strip().lower()
     query.answer()
-    query.edit_message_text(get_price(coin))
+
+    price_text = get_price(coin)  # this should now work correctly
+    query.edit_message_text(price_text, parse_mode='Markdown')
 
 
 # Fancy Command
