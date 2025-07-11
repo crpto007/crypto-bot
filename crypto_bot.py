@@ -1178,16 +1178,15 @@ def price(update: Update, context: CallbackContext):
 # Shortcuts
 
 
-def btc_command(update: Update, context: CallbackContext):
-    update.message.reply_text(get_price('bitcoin'))
+def btc_command(update, context):
+    update.message.reply_text(get_price("btc"), parse_mode='Markdown')
 
+def eth_command(update, context):
+    update.message.reply_text(get_price("eth"), parse_mode='Markdown')
 
-def eth_command(update: Update, context: CallbackContext):
-    update.message.reply_text(get_price('ethereum'))
+def doge_command(update, context):
+    update.message.reply_text(get_price("doge"), parse_mode='Markdown')
 
-
-def doge_command(update: Update, context: CallbackContext):
-    update.message.reply_text(get_price('dogecoin'))
 
 
 # Inline Buttons
