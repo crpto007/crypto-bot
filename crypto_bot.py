@@ -232,16 +232,21 @@ def auto_reply_handler(update, context):
 
     text = update.message.text.lower().strip()
 
-    # Reply only to valid single-word coin names
+    # ✅ Ignore quiz or custom callback responses
+    if text.startswith("quiz|"):
+        return
+
+    # 💰 Coin name auto-reply
     if text.isalpha() and len(text) > 2:
         price_info = get_price(text)
         if "not found" not in price_info and "Error" not in price_info:
             update.message.reply_text(f"💰 {price_info}", parse_mode='Markdown')
             return
 
-    # Optional: allow AI question replies after coin check
+    # 🤖 AI fallback
     if '?' in text or text.endswith("please"):
         ai_question_handler(update, context)
+
 
 def add_watch(update, context):
     user_id = str(update.effective_user.id)
@@ -1537,7 +1542,7 @@ def main():
         dp.add_handler(CommandHandler("clearwatch", clear_watchlist))
         dp.add_handler(CommandHandler("removewatch", remove_watch))
         dp.add_handler(CommandHandler("quiz", quiz_command))
-        dp.add_handler(CallbackQueryHandler(quiz_response, pattern="^quiz\\|"))
+        dp.add_handler(CallbackQueryHandler(quiz_response, pattern="^quiz\|"))
         dp.add_handler(CallbackQueryHandler(button_handler, pattern='^(portfolio|alerts|trending|predict|settings)$'))
         dp.add_handler(MessageHandler(Filters.text & ~Filters.command, auto_reply_handler))
         schedule_digest(updater)  # ⏰ Sends message daily at 9AM
