@@ -86,16 +86,7 @@ quiz_questions = [
         "answer": "Non-Fungible Token"
     }
 ]
-def track_usage(update):
-    if update is None:
-        return
-    user_id = str(update.effective_user.id)
-    if user_id not in user_data:
-        user_data[user_id] = {"watch_count": 0, "cmd_count": 0}
-    user_data[user_id]["cmd_count"] += 1
-# ----------------------------------------
-# 2️⃣ Watch & Earn System
-# ----------------------------------------
+
 def watch_command(update: Update, context: CallbackContext):
       # Add this line
     user_id = str(update.effective_user.id)
@@ -145,19 +136,6 @@ def schedule_digest(updater):
 # ----------------------------------------
 # 6️⃣ User Analytics System
 # ----------------------------------------
-def mystats_command(update: Update, context: CallbackContext):
-    user_id = str(update.effective_user.id)  # ✅ Valid
-    ...
-    stats = user_data.get(user_id, {})
-    count = stats.get("watch_count", 0)
-    cmd_count = stats.get("cmd_count", 0)
-
-    update.message.reply_text(
-        f"📊 *Your Stats:*\n\n"
-        f"👀 Watch Count: {count}\n"
-        f"💬 Commands Used: {cmd_count}",
-        parse_mode='Markdown'
-    )
 # ----------------------------------------
 # 7️⃣ Crypto Quiz Game
 # ----------------------------------------
@@ -1538,7 +1516,6 @@ def main():
         dp.add_handler(CommandHandler("predict", predict_command))
         dp.add_handler(CommandHandler("status", status_command))
         dp.add_handler(CommandHandler("watch", watch_command))
-        dp.add_handler(CommandHandler("mystats", mystats_command))
         dp.add_handler(CommandHandler("clearwatch", clear_watchlist))
         dp.add_handler(CommandHandler("removewatch", remove_watch))
         dp.add_handler(CommandHandler("quiz", quiz_command))
