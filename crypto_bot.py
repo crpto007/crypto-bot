@@ -955,35 +955,60 @@ def stop_real_time_graph(update, context):
         update.message.reply_text(f"⚠️ No active real-time graph for {coin}")
 
 
+from io import BytesIO  # Make sure this import is at the top
+
 def graph_command(update, context):
     if len(context.args) == 0:
         update.message.reply_text("Usage: /graph bitcoin")
         return
 
     coin = context.args[0].lower()
+
+    # Optional alias mapping
+    coin_alias = {
+        'btc': 'bitcoin',
+        'eth': 'ethereum',
+        'doge': 'dogecoin',
+        'bnb': 'binancecoin',
+        'sol': 'solana',
+        'matic': 'matic-network',
+    }
+    coin = coin_alias.get(coin, coin)
+
     url = f"https://api.coingecko.com/api/v3/coins/{coin}/market_chart?vs_currency=inr&days=7"
-    response = requests.get(url)
 
-    if response.status_code != 200:
-        update.message.reply_text("❌ Coin not found or API error.")
-        return
+    try:
+        response = requests.get(url, timeout=15)
+        if response.status_code != 200:
+            update.message.reply_text("❌ Coin not found or API error.")
+            return
 
-    data = response.json()['prices']
-    dates = [datetime.fromtimestamp(p[0] / 1000) for p in data]
-    prices = [p[1] for p in data]
+        data = response.json()['prices']
+        if not data:
+            update.message.reply_text("⚠️ No price data available.")
+            return
 
-    plt.figure(figsize=(10, 4))
-    plt.plot(prices, label=f"{coin.upper()} Price")
-    plt.title(f"{coin.upper()} - Last 7 Days (INR)")
-    plt.xlabel("Date")
-    plt.ylabel("Price ₹")
-    plt.grid(True)
-    plt.legend()
+        dates = [datetime.fromtimestamp(p[0] / 1000) for p in data]
+        prices = [p[1] for p in data]
 
-    buffer = BytesIO()
-    plt.savefig(buffer, format='png')
-    buffer.seek(0)
-    update.message.reply_photo(photo=buffer)
+        plt.figure(figsize=(10, 4))
+        plt.plot(dates, prices, label=f"{coin.upper()} Price", color='blue')
+        plt.title(f"{coin.upper()} - Last 7 Days (INR)")
+        plt.xlabel("Date")
+        plt.ylabel("Price ₹")
+        plt.grid(True)
+        plt.legend()
+
+        buffer = BytesIO()
+        plt.savefig(buffer, format='png')
+        buffer.seek(0)
+        update.message.reply_photo(photo=buffer)
+        buffer.close()
+        plt.close()
+
+    except Exception as e:
+        update.message.reply_text(f"⚠️ Failed to fetch or plot data. Error: {str(e)}")
+
     
 def start(update: Update, context: CallbackContext):
     welcome_text = (
@@ -1218,20 +1243,34 @@ def button_handler(update: Update, context: CallbackContext):
 def fancy_command(update: Update, context: CallbackContext):
     if context.args:
         coin = context.args[0].strip().lower()
+
+        # Optional alias support
+        coin_alias = {
+            'btc': 'bitcoin',
+            'eth': 'ethereum',
+            'doge': 'dogecoin',
+            'bnb': 'binancecoin',
+            'sol': 'solana',
+            'matic': 'matic-network',
+        }
+        coin = coin_alias.get(coin, coin)
+
         try:
             url = f"https://api.coingecko.com/api/v3/simple/price?ids={coin}&vs_currencies=inr"
-            response = requests.get(url)
+            response = requests.get(url, timeout=10)
             data = response.json()
-            if coin in data:
+
+            if data and coin in data and 'inr' in data[coin]:
                 price = data[coin]["inr"]
-                reply = f"✨ *{coin.capitalize()}* \nPrice: ₹{price}"
+                reply = f"✨ *{coin.capitalize()}*\n💰 Price: ₹{price:,.2f}"
             else:
-                reply = f"❌ Coin '{coin}' not found."
+                reply = f"❌ Coin '{coin}' not found. Try `/coinlist` for options."
             update.message.reply_text(reply, parse_mode='Markdown')
         except Exception as e:
             update.message.reply_text(f"⚠️ Error: {e}")
     else:
         update.message.reply_text("Usage: /fancy bitcoin")
+
 
 
 # Auto BTC Update
