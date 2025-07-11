@@ -28,7 +28,11 @@ matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 from io import BytesIO
 from datetime import datetime
+from dotenv import load_dotenv
 import openai
+
+load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # Logging for errors
 logging.basicConfig(level=logging.INFO)
