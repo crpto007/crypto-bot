@@ -1,5 +1,7 @@
 import os
 import logging
+import openai
+openai.api_key = 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
 from telegram.error import Conflict
@@ -397,7 +399,6 @@ def market_sentiment(update, context):
     except Exception as e:
         update.message.reply_text(f"❌ Error analyzing sentiment: {str(e)}")
 
-
 def chatgpt_auto_reply(update, context):
     """AI-powered auto-reply for crypto questions"""
     user_id = str(update.effective_user.id)
@@ -410,47 +411,33 @@ def chatgpt_auto_reply(update, context):
         update.message.reply_text(
             "🤖 ChatGPT Auto-Reply enabled! Ask me any crypto question.")
 
-
 def ai_question_handler(update, context):
-    """Handle crypto questions with AI responses"""
     user_id = str(update.effective_user.id)
     if user_id not in auto_reply_users:
         return
 
-    text = update.message.text.lower()
+    prompt = update.message.text.strip()
 
-    # Common crypto questions
-    if any(keyword in text for keyword in
-           ['what is', 'how to', 'why', 'when', 'where', 'explain', '?']):
-        responses = {
-            'bitcoin':
-            "🟠 Bitcoin is the first cryptocurrency, created by Satoshi Nakamoto in 2009. It's digital money that works without banks!",
-            'ethereum':
-            "⚡ Ethereum is a blockchain platform that runs smart contracts. It's like a computer that runs apps decentralized!",
-            'blockchain':
-            "⛓️ Blockchain is a digital ledger that records transactions across many computers. Think of it as an unbreakable record book!",
-            'mining':
-            "⛏️ Mining is the process of validating transactions and creating new coins. Miners use powerful computers to solve complex puzzles!",
-            'wallet':
-            "👛 A crypto wallet stores your digital coins. It's like a bank account but you control it completely!",
-            'defi':
-            "🏦 DeFi (Decentralized Finance) lets you do banking without banks - lending, borrowing, trading, all on blockchain!",
-            'nft':
-            "🎨 NFTs are unique digital items on blockchain. Think digital art, collectibles, or game items that you truly own!",
-            'staking':
-            "🥩 Staking is like earning interest on your crypto. You lock up coins to help secure the network and get rewards!"
-        }
+    # Optional filter: ignore 1-word inputs
+    if len(prompt.split()) <= 1:
+        return
 
-        for keyword, response in responses.items():
-            if keyword in text:
-                update.message.reply_text(f"🤖 AI Answer:\n\n{response}")
-                return
-
-        # Generic helpful response
-        update.message.reply_text(
-            "🤖 Great question! For detailed crypto info, use /ainews <coin> or /price <coin>. I'm here to help! 💪"
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # Or "gpt-4" if you have access
+            messages=[
+                {"role": "system", "content": "You are a crypto expert bot that explains any crypto-related question in simple Hindi-English mix for beginners."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=300
         )
+        reply = response['choices'][0]['message']['content']
+        update.message.reply_text(f"🤖 AI Answer:\n\n{reply}")
 
+    except Exception as e:
+        update.message.reply_text("⚠️ Sorry, AI failed to respond. Try again.")
+        print(f"OpenAI Error: {e}")
 
 def airdrops_command(update, context):
     """Show active airdrops and opportunities"""
