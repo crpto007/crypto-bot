@@ -1202,18 +1202,6 @@ def price_buttons(update: Update, context: CallbackContext):
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.message.reply_text('Select a coin:', reply_markup=reply_markup)
 
-def button_handler(update: Update, context: CallbackContext):
-    query = update.callback_query
-    coin = query.data.strip().lower()
-    query.answer()
-
-    price_text = get_price(coin)  # this should now work correctly
-    query.edit_message_text(price_text, parse_mode='Markdown')
-
-
-# Fancy Command
-
-
 def fancy_command(update: Update, context: CallbackContext):
     if context.args:
         coin = context.args[0].strip().lower()
