@@ -1109,7 +1109,18 @@ def help_command(update: Update, context: CallbackContext):
 def get_price(coin):
     try:
         coin = coin.strip().lower()
-        # Get comprehensive data for professional display
+
+        # Map short symbols to full CoinGecko IDs
+        symbol_map = {
+            "btc": "bitcoin",
+            "eth": "ethereum",
+            "doge": "dogecoin",
+            "bnb": "binancecoin",
+            "xrp": "ripple"
+        }
+        coin = symbol_map.get(coin, coin)
+
+        # Full detail API
         url = f"https://api.coingecko.com/api/v3/coins/{coin}"
         response = requests.get(url, timeout=10)
 
@@ -1123,7 +1134,6 @@ def get_price(coin):
             change_24h = market_data.get('price_change_percentage_24h', 0)
             market_cap_rank = data.get('market_cap_rank', 'N/A')
 
-            # Professional formatting
             trend_icon = "📈" if change_24h > 0 else "📉" if change_24h < 0 else "➡️"
             change_color = "🟢" if change_24h > 0 else "🔴" if change_24h < 0 else "⚪"
 
@@ -1133,24 +1143,24 @@ def get_price(coin):
                     f"{trend_icon} 24h: **{change_24h:+.2f}%**\n"
                     f"🏆 Rank: **#{market_cap_rank}**\n"
                     f"⏰ *Live Data*")
-        else:
-            # Fallback to simple price API
-            simple_url = f"https://api.coingecko.com/api/v3/simple/price?ids={coin}&vs_currencies=inr"
-            simple_response = requests.get(simple_url, timeout=10)
 
-            if simple_response.status_code == 200:
-                simple_data = simple_response.json()
-                if coin in simple_data and 'inr' in simple_data[coin]:
-                    price = simple_data[coin]["inr"]
-                    return f"💰 **{coin.capitalize()}** → ₹{price:,.2f}"
+        # Fallback: simple price API
+        simple_url = f"https://api.coingecko.com/api/v3/simple/price?ids={coin}&vs_currencies=inr"
+        simple_response = requests.get(simple_url, timeout=10)
+        if simple_response.status_code == 200:
+            simple_data = simple_response.json()
+            if coin in simple_data and 'inr' in simple_data[coin]:
+                price = simple_data[coin]["inr"]
+                return f"💰 **{coin.capitalize()}** → ₹{price:,.2f}"
 
-            return f"❌ Coin '{coin}' not found. Try `/coinlist` to see available coins."
+        return f"❌ Coin '{coin}' not found. Try `/coinlist` to see available coins."
 
     except requests.exceptions.Timeout:
         return "⏱️ Market data temporarily unavailable. Please try again."
-    except Exception:
-        return "⚠️ Unable to fetch price data. Try again in a moment."
 
+    except Exception as e:
+        print(f"[get_price error] {e}")
+        return "⚠️ Unable to fetch price data. Try again in a moment."
 
 # Price Command
 
