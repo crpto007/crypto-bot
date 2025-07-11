@@ -123,13 +123,13 @@ def mywallet_command(update: Update, context: CallbackContext):
 # ----------------------------------------
 # 4️⃣ Button UI Menu
 # ----------------------------------------
-
-
-
-def button_handler(update: Update, context: CallbackContext):
+def coin_button_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     query.answer()
-    query.edit_message_text(text=f"📍 You selected: {query.data}")
+    coin = query.data.strip().lower()
+    price = get_price(coin)
+
+    query.edit_message_text(f"💰 {price}", parse_mode='Markdown')
 
 # ----------------------------------------
 # 5️⃣ Daily Auto AI Market Digest
@@ -1032,38 +1032,33 @@ def start(update: Update, context: CallbackContext):
     update.message.reply_text(welcome_text, parse_mode='Markdown')
     update.message.reply_text("👇 Choose an option:", reply_markup=reply_markup)
     
-def button_handler(update: Update, context: CallbackContext):
-    query = update.callback_query
-    query.answer()
+def auto_reply_handler(update, context):
+    # 🛑 Ignore non-text updates (like button presses)
+    if not update.message or not update.message.text:
+        return
 
-    data = query.data
-    user_id = query.from_user.id
+    user_id = str(update.effective_user.id)
+    if user_id not in auto_reply_users:
+        return
 
-    # Wrap callback query as fake update for command functions
-    fake_update = Update(update.update_id, message=query.message)
+    text = update.message.text.lower().strip()
 
-    if data == 'portfolio':
-        context.bot.send_message(chat_id=user_id, text="📊 Loading your portfolio...")
-        portfolio_command(fake_update, context)
+    # ❌ Ignore button keywords like settings, portfolio, etc.
+    ignore_words = ["settings", "portfolio", "alerts", "predict", "trending"]
+    if text in ignore_words:
+        return
 
-    elif data == 'alerts':
-        context.bot.send_message(chat_id=user_id, text="🔔 Showing your alerts...")
-        view_alerts_command(fake_update, context)
+    # 💰 Auto price reply
+    if text.isalpha() and len(text) > 2:
+        price_info = get_price(text)
+        if "not found" not in price_info and "Error" not in price_info:
+            update.message.reply_text(f"💰 {price_info}", parse_mode='Markdown')
+            return
 
-    elif data == 'trending':
-        context.bot.send_message(chat_id=user_id, text="📈 Fetching trending coins...")
-        trending_command(fake_update, context)
+    # 🤖 If user types a question
+    if "?" in text or any(w in text for w in ['what', 'how', 'why', 'when']):
+        ai_question_handler(update, context)
 
-    elif data == 'predict':
-        context.bot.send_message(chat_id=user_id, text="🤖 Predicting with AI...")
-        context.args = ["bitcoin"]  # default coin if no user input
-        predict_command(fake_update, context)
-
-    elif data == 'settings':
-        context.bot.send_message(chat_id=user_id, text="⚙️ Settings feature coming soon!")
-
-    else:
-        context.bot.send_message(chat_id=user_id, text="❓ Unknown option selected.")
 
 # Help Command
 def plot_command(update: Update, context: CallbackContext):
@@ -1553,7 +1548,8 @@ def main():
         dp.add_handler(CommandHandler("removewatch", remove_watch))
         dp.add_handler(CommandHandler("quiz", quiz_command))
         dp.add_handler(CallbackQueryHandler(quiz_response, pattern="^quiz\|"))
-        dp.add_handler(CallbackQueryHandler(button_handler))
+        dp.add_handler(CallbackQueryHandler(button_handler, pattern="^(portfolio|alerts|trending|predict|settings)$"))
+        dp.add_handler(CallbackQueryHandler(coin_button_handler, pattern="^(bitcoin|ethereum|dogecoin)$"))
         dp.add_handler(MessageHandler(Filters.text & ~Filters.command, auto_reply_handler))
         schedule_digest(updater)  # ⏰ Sends message daily at 9AM
         print("🤖 Bot starting...")
