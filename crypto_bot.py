@@ -475,114 +475,104 @@ def airdrops_command(update, context):
         update.message.reply_text(airdrops_info, parse_mode='Markdown', disable_web_page_preview=True)
     except Exception as e:
         update.message.reply_text(f"❌ Error fetching airdrops: {str(e)}")
-
 def portfolio_command(update, context):
     user_id = str(update.effective_user.id)
 
-    if len(context.args) == 0:
-        # Show Portfolio
-        if user_id not in user_portfolios or not user_portfolios[user_id]:
-            update.message.reply_text(
-                """📊 *YOUR CRYPTO PORTFOLIO*\n\n💼 Portfolio is empty!\n\n📝 *Add coins with:*\n/portfolio add bitcoin 0.5 45000\n/portfolio add ethereum 2.0 30000\n\n📈 *Commands:*\n• /portfolio - View portfolio\n• /portfolio add <coin> <amount> <buy_price>\n• /portfolio remove <coin>\n• /portfolio clear - Clear all\n\n💡 Track your investments and see profits/losses!""",
-                parse_mode='Markdown')
-            return
-
-        portfolio = user_portfolios[user_id]
-        total_value = 0
-        total_invested = 0
-        reply = "📊 *YOUR CRYPTO PORTFOLIO*\n\n"
-
-        for coin, data in portfolio.items():
-            amount = data['amount']
-            buy_price = data['buy_price']
-            invested = amount * buy_price
-
-            try:
-                url = f"https://api.coingecko.com/api/v3/simple/price?ids={coin}&vs_currencies=inr"
-                response = requests.get(url, timeout=10)
-                price_data = response.json()
-                current_price = price_data[coin]['inr']
-                current_value = amount * current_price
-                profit_loss = current_value - invested
-                profit_percent = (profit_loss / invested) * 100
-
-                emoji = "🟢" if profit_loss > 0 else "🔴" if profit_loss < 0 else "⚪"
-
-                reply += f"{emoji} *{coin.upper()}*\n"
-                reply += f"💰 Amount: {amount}\n"
-                reply += f"💵 Buy Price: ₹{buy_price:,}\n"
-                reply += f"📈 Current: ₹{current_price:,}\n"
-                reply += f"💎 Value: ₹{current_value:,.2f}\n"
-                reply += f"📊 P&L: ₹{profit_loss:,.2f} ({profit_percent:+.2f}%)\n\n"
-
-                total_value += current_value
-                total_invested += invested
-
-            except:
-                reply += f"⚠️ *{coin.upper()}* - Failed to fetch price\n\n"
-
-        total_pl = total_value - total_invested
-        total_pl_percent = (total_pl /
-                            total_invested) * 100 if total_invested > 0 else 0
-        pl_emoji = "🟢" if total_pl > 0 else "🔴" if total_pl < 0 else "⚪"
-
-        reply += "📋 *PORTFOLIO SUMMARY*\n"
-        reply += f"💰 Total Invested: ₹{total_invested:,.2f}\n"
-        reply += f"💎 Current Value: ₹{total_value:,.2f}\n"
-        reply += f"{pl_emoji} Total P&L: ₹{total_pl:,.2f} ({total_pl_percent:+.2f}%)"
-
-        update.message.reply_text(reply, parse_mode='Markdown')
-        return  # Prevent going to below code accidentally
-
-    # ADD COIN
-    if context.args[0].lower() == 'add':
-        if len(context.args) < 4:
-            update.message.reply_text(
-                "❌ Usage: /portfolio add bitcoin 0.5 45000")
-            return
-
-        coin = context.args[1].lower()
-        try:
-            amount = float(context.args[2])
-            buy_price = float(context.args[3])
-            if user_id not in user_portfolios:
-                user_portfolios[user_id] = {}
-
-            user_portfolios[user_id][coin] = {
-                'amount': amount,
-                'buy_price': buy_price
-            }
-
-            update.message.reply_text(
-                f"✅ Added {amount} {coin.upper()} at ₹{buy_price:,} to your portfolio!"
-            )
-        except:
-            update.message.reply_text("❌ Invalid amount or price.")
-
-    # REMOVE COIN
-    elif context.args[0].lower() == 'remove':
-        if len(context.args) < 2:
-            update.message.reply_text("❌ Usage: /portfolio remove bitcoin")
-            return
-
-        coin = context.args[1].lower()
-        if user_id in user_portfolios and coin in user_portfolios[user_id]:
-            del user_portfolios[user_id][coin]
-            update.message.reply_text(
-                f"✅ Removed {coin.upper()} from portfolio.")
-        else:
-            update.message.reply_text(f"❌ {coin.upper()} not found.")
-
-    # CLEAR
-    elif context.args[0].lower() == 'clear':
-        user_portfolios[user_id] = {}
-        update.message.reply_text("✅ Portfolio cleared!")
-
-    # INVALID
-    else:
+    if user_id not in user_portfolios or not user_portfolios[user_id]:
         update.message.reply_text(
-            "❌ Unknown subcommand. Use /portfolio for help.")
+            "📊 *YOUR CRYPTO PORTFOLIO*\n\n💼 Portfolio is empty!\n\n"
+            "📝 *Add coins with:*\n"
+            "`/addcoin bitcoin 0.5 45000`\n"
+            "`/removecoin bitcoin`\n"
+            "`/clearportfolio`\n",
+            parse_mode='Markdown')
+        return
 
+    portfolio = user_portfolios[user_id]
+    total_value = 0
+    total_invested = 0
+    reply = "📊 *YOUR CRYPTO PORTFOLIO*\n\n"
+
+    for coin, data in portfolio.items():
+        amount = data['amount']
+        buy_price = data['buy_price']
+        invested = amount * buy_price
+
+        try:
+            url = f"https://api.coingecko.com/api/v3/simple/price?ids={coin}&vs_currencies=inr"
+            response = requests.get(url, timeout=10)
+            price_data = response.json()
+            current_price = price_data[coin]['inr']
+            current_value = amount * current_price
+            profit_loss = current_value - invested
+            profit_percent = (profit_loss / invested) * 100
+
+            emoji = "🟢" if profit_loss > 0 else "🔴" if profit_loss < 0 else "⚪"
+
+            reply += f"{emoji} *{coin.upper()}*\n"
+            reply += f"💰 Amount: {amount}\n"
+            reply += f"💵 Buy Price: ₹{buy_price:,}\n"
+            reply += f"📈 Current: ₹{current_price:,}\n"
+            reply += f"💎 Value: ₹{current_value:,.2f}\n"
+            reply += f"📊 P&L: ₹{profit_loss:,.2f} ({profit_percent:+.2f}%)\n\n"
+
+            total_value += current_value
+            total_invested += invested
+
+        except Exception as e:
+            reply += f"⚠️ *{coin.upper()}* - Price fetch failed\n\n"
+
+    total_pl = total_value - total_invested
+    total_pl_percent = (total_pl / total_invested) * 100 if total_invested > 0 else 0
+    pl_emoji = "🟢" if total_pl > 0 else "🔴" if total_pl < 0 else "⚪"
+
+    reply += "📋 *PORTFOLIO SUMMARY*\n"
+    reply += f"💰 Invested: ₹{total_invested:,.2f}\n"
+    reply += f"💎 Current: ₹{total_value:,.2f}\n"
+    reply += f"{pl_emoji} P&L: ₹{total_pl:,.2f} ({total_pl_percent:+.2f}%)"
+
+    update.message.reply_text(reply, parse_mode='Markdown')
+    
+def addcoin_command(update, context):
+    user_id = str(update.effective_user.id)
+    if len(context.args) != 3:
+        update.message.reply_text("❌ Usage: /addcoin bitcoin 0.5 45000")
+        return
+
+    coin = context.args[0].lower()
+    try:
+        amount = float(context.args[1])
+        buy_price = float(context.args[2])
+    except:
+        update.message.reply_text("❌ Invalid amount or price.")
+        return
+
+    user_portfolios.setdefault(user_id, {})[coin] = {
+        'amount': amount,
+        'buy_price': buy_price
+    }
+
+    update.message.reply_text(
+        f"✅ Added {amount} {coin.upper()} at ₹{buy_price:,} to your portfolio!"
+    )
+    
+def removecoin_command(update, context):
+    user_id = str(update.effective_user.id)
+    if len(context.args) != 1:
+        update.message.reply_text("❌ Usage: /removecoin bitcoin")
+        return
+
+    coin = context.args[0].lower()
+    if user_id in user_portfolios and coin in user_portfolios[user_id]:
+        del user_portfolios[user_id][coin]
+        update.message.reply_text(f"✅ Removed {coin.upper()} from your portfolio.")
+    else:
+        update.message.reply_text(f"⚠️ {coin.upper()} not found in your portfolio.")
+        
+def clearportfolio_command(update, context):
+    user_id = str(update.effective_user.id)
+    user_portfolios[user_id] = {}
+    update.message.reply_text("🗑️ Your portfolio has been cleared.")
 
 def dominance_command(update, context):
     """Show market dominance data"""
@@ -1541,6 +1531,9 @@ def main():
         dp.add_handler(CommandHandler("chatgpt", chatgpt_auto_reply))
         dp.add_handler(CommandHandler("airdrops", airdrops_command))
         dp.add_handler(CommandHandler("portfolio", portfolio_command))
+        dp.add_handler(CommandHandler("addcoin", addcoin_command))
+        dp.add_handler(CommandHandler("removecoin", removecoin_command))
+        dp.add_handler(CommandHandler("clearportfolio", clearportfolio_command))
         dp.add_handler(CommandHandler("dominance", dominance_command))
         dp.add_handler(CommandHandler("predict", predict_command))
         dp.add_handler(CommandHandler("status", status_command))
