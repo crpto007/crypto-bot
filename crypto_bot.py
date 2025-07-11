@@ -1358,15 +1358,16 @@ def trending_command(update: Update, context: CallbackContext):
 
         if trending_response.status_code == 200:
             trending_data = trending_response.json()
-            trending_coins = [
-                coin['item']['id'] for coin in trending_data['coins'][:5]
-            ]
+            all_ids = [coin['item']['id'] for coin in trending_data['coins']]
+# Filter out known problematic or empty IDs
+trending_coins = [cid for cid in all_ids if cid not in ('', None)]
         else:
             # Fallback to top coins
             trending_coins = [
                 'bitcoin', 'ethereum', 'tether', 'binancecoin', 'solana'
             ]
-
+        if not trending_coins:
+    trending_coins = ['bitcoin', 'ethereum', 'tether', 'binancecoin', 'solana']
         # Get detailed market data
         url = f"https://api.coingecko.com/api/v3/coins/markets?vs_currency=inr&ids={','.join(trending_coins)}&order=market_cap_desc&per_page=5&page=1"
         response = requests.get(url, timeout=15)
