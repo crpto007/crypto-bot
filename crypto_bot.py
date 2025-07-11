@@ -34,6 +34,14 @@ import openai
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+def ensure_user_data(user_id):
+    if user_id not in user_data:
+        user_data[user_id] = {
+            "cmd_count": 0,
+            "watch_count": 0,
+            "coins": 0
+        }
+
 # Logging for errors
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -57,7 +65,6 @@ alerts_db = {}
 share_link = {}
 user_portfolios = {}
 user_data = {}
-user_stats = {}
 
 quiz_questions = [
     {
@@ -88,20 +95,30 @@ quiz_questions = [
 ]
 
 def watch_command(update: Update, context: CallbackContext):
-      # Add this line
     user_id = str(update.effective_user.id)
-    user_data[user_id]["watch_count"] += 1  # Increment watch count
+    ensure_user_data(user_id)  # Make sure data exists
+
+    user_data[user_id]["watch_count"] += 1
 
     chat_id = update.effective_chat.id
     context.bot.send_message(chat_id=chat_id, text="👀 Watching...")
 
-    context.job_queue.run_once(finish_watch, 60, context=chat_id)
+    context.job_queue.run_once(finish_watch, 60, context=user_id)  # context = user_id now
 
 def finish_watch(context: CallbackContext):
-    job = context.job
-    chat_id = job.context
+    user_id = context.job.context
+    ensure_user_data(user_id)
 
-    context.bot.send_message(chat_id=chat_id, text="🎉 You've successfully completed watching! You earned 10 coins 💰")
+    user_data[user_id]["coins"] += 10  # Give coins
+    context.bot.send_message(chat_id=user_id, text="🎉 You've completed watching! You earned 10 coins 💰")
+    
+def mywallet_command(update: Update, context: CallbackContext):
+    user_id = str(update.effective_user.id)
+    ensure_user_data(user_id)
+    coins = user_data[user_id].get("coins", 0)
+
+    update.message.reply_text(f"💼 *Your Wallet*\n\n💰 Coins: {coins}", parse_mode='Markdown')
+
 
 # ----------------------------------------
 # 4️⃣ Button UI Menu
@@ -1515,6 +1532,7 @@ def main():
         dp.add_handler(CommandHandler("dominance", dominance_command))
         dp.add_handler(CommandHandler("predict", predict_command))
         dp.add_handler(CommandHandler("status", status_command))
+        dp.add_handler(CommandHandler("mywallet", mywallet_command))
         dp.add_handler(CommandHandler("watch", watch_command))
         dp.add_handler(CommandHandler("clearwatch", clear_watchlist))
         dp.add_handler(CommandHandler("removewatch", remove_watch))
