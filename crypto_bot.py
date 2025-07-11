@@ -1020,47 +1020,8 @@ def start(update: Update, context: CallbackContext):
         "💡 *Powered by CoinGecko API & Advanced AI*"
     )
 
-    keyboard = [
-        [InlineKeyboardButton("💼 My Portfolio", callback_data='portfolio')],
-        [InlineKeyboardButton("🔔 My Alerts", callback_data='alerts')],
-        [InlineKeyboardButton("📈 Trending", callback_data='trending')],
-        [InlineKeyboardButton("🤖 Predict", callback_data='predict')],
-        [InlineKeyboardButton("⚙️ Settings", callback_data='settings')]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-
     update.message.reply_text(welcome_text, parse_mode='Markdown')
-    update.message.reply_text("👇 Choose an option:", reply_markup=reply_markup)
-    
-def button_handler(update: Update, context: CallbackContext):
-    query = update.callback_query
-    query.answer()
-    data = query.data
-
-    if data == 'portfolio':
-        query.edit_message_text("📊 Opening your portfolio...")
-        portfolio_command(update, context)  # You must define this
-
-    elif data == 'alerts':
-        query.edit_message_text("🔔 Showing your alerts...")
-        view_alerts_command(update, context)  # You must define this
-
-    elif data == 'trending':
-        query.edit_message_text("📈 Fetching trending coins...")
-        trending_command(update, context)
-
-    elif data == 'predict':
-        query.edit_message_text("🤖 AI is predicting BTC...")
-        context.args = ["bitcoin"]
-        predict_command(update, context)  # You must define this
-
-    elif data == 'settings':
-        query.edit_message_text("⚙️ Settings feature coming soon!")
-
-    else:
-        query.edit_message_text("❓ Unknown selection.")
-
-
+   
 # Help Command
 def plot_command(update: Update, context: CallbackContext):
     update.message.reply_text("Generating price plot...")
@@ -1549,7 +1510,6 @@ def main():
         dp.add_handler(CommandHandler("removewatch", remove_watch))
         dp.add_handler(CommandHandler("quiz", quiz_command))
         dp.add_handler(CallbackQueryHandler(quiz_response, pattern="^quiz\|"))
-        dp.add_handler(CallbackQueryHandler(button_handler, pattern="^(portfolio|alerts|trending|predict|settings)$"))
         dp.add_handler(CallbackQueryHandler(coin_button_handler, pattern="^(bitcoin|ethereum|dogecoin)$"))
         dp.add_handler(MessageHandler(Filters.text & ~Filters.command, auto_reply_handler))
         schedule_digest(updater)  # ⏰ Sends message daily at 9AM
