@@ -266,6 +266,28 @@ def view_watchlist(update, context):
         reply += f"{get_price(coin)}\n\n"
 
     update.message.reply_text(reply, parse_mode='Markdown')
+    
+def clear_watchlist(update, context):
+    user_id = str(update.effective_user.id)
+    if user_id in user_watchlist:
+        user_watchlist[user_id].clear()
+        update.message.reply_text("🗑️ Your watchlist has been cleared.")
+    else:
+        update.message.reply_text("📭 Your watchlist is already empty.")
+        
+def remove_watch(update, context):
+    user_id = str(update.effective_user.id)
+    if not context.args:
+        update.message.reply_text("Usage: /removewatch bitcoin")
+        return
+
+    coin = context.args[0].lower()
+    if user_id in user_watchlist and coin in user_watchlist[user_id]:
+        user_watchlist[user_id].remove(coin)
+        update.message.reply_text(f"❌ Removed *{coin}* from your watchlist.",
+                                  parse_mode='Markdown')
+    else:
+        update.message.reply_text(f"⚠️ {coin} is not in your watchlist.")
 
 
 def ai_news_summary(update, context):
@@ -1282,30 +1304,6 @@ def get_btc_price():
     data = response.json()
     return data['bitcoin']['inr']
 
-
-def auto_btc(update: Update, context: CallbackContext):
-    global btc_job
-    chat_id = update.effective_chat.id  # Get the chat ID of the user who sent the command
-
-    def send_btc_price():
-        try:
-            price = get_btc_price()
-            context.bot.send_message(chat_id=chat_id,
-                                     text=f"💰 Live BTC Price: ₹{price}")
-        except Exception as e:
-            logger.error(f"Error: {e}")
-
-    if btc_job:
-        update.message.reply_text("🔁 Auto BTC is already running.")
-    else:
-        btc_job = scheduler.add_job(send_btc_price, 'interval', seconds=60)
-        update.message.reply_text(
-            "✅ Auto BTC updates started (every 60 seconds).")
-
-
-alerts_db = {}  # GLOBAL dictionary
-
-
 def set_alert(update, context):
     user_id = str(update.effective_user.id)
 
@@ -1376,15 +1374,35 @@ def remove_alert(update, context):
         update.message.reply_text("⚠️ No alerts set.")
 
 
+btc_job = None  # Global variable to track the job
+
+def auto_btc(update: Update, context: CallbackContext):
+    global btc_job
+    chat_id = update.effective_chat.id
+
+    def send_btc_price(context: CallbackContext):
+        try:
+            price = get_btc_price()
+            context.bot.send_message(chat_id=context.job.context,
+                                     text=f"💰 Live BTC Price: ₹{price}")
+        except Exception as e:
+            print(f"Error in auto BTC update: {e}")
+
+    if btc_job:
+        update.message.reply_text("🔁 Auto BTC is already running.")
+    else:
+        btc_job = context.job_queue.run_repeating(send_btc_price, interval=60, first=0, context=chat_id)
+        update.message.reply_text("✅ Auto BTC updates started (every 60 seconds).")
+
+
 def stop_btc(update: Update, context: CallbackContext):
     global btc_job
     if btc_job:
-        btc_job.remove()
+        btc_job.schedule_removal()
         btc_job = None
-        update.message.reply_text("⛔ Auto BTC updates stopped.")
+        update.message.reply_text("🛑 Auto BTC updates stopped.")
     else:
-        update.message.reply_text("⚠️ Auto BTC is not running.")
-
+        update.message.reply_text("ℹ️ Auto BTC is not running.")
 
 # Trending
 
@@ -1547,6 +1565,8 @@ def main():
         dp.add_handler(CommandHandler("status", status_command))
         dp.add_handler(CommandHandler("watch", watch_command))
         dp.add_handler(CommandHandler("mystats", mystats_command))
+        dp.add_handler(CommandHandler("clearwatch", clear_watchlist))
+        dp.add_handler(CommandHandler("removewatch", remove_watch))
         dp.add_handler(CommandHandler("quiz", quiz_command))
         dp.add_handler(CallbackQueryHandler(quiz_response, pattern="^quiz\\|"))
         dp.add_handler(CallbackQueryHandler(button_handler, pattern='^(portfolio|alerts|trending|predict|settings)$'))
