@@ -119,6 +119,10 @@ def mywallet_command(update: Update, context: CallbackContext):
 
     update.message.reply_text(f"💼 *Your Wallet*\n\n💰 Coins: {coins}", parse_mode='Markdown')
 
+def button_handler(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query.answer()
+    query.edit_message_text(text=f"📍 You selected: {query.data}")
 
 # ----------------------------------------
 # 4️⃣ Button UI Menu
