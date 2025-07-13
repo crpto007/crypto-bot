@@ -44,9 +44,6 @@ def ensure_user_data(user_id):
             "coins": 0
         }
 
-# Logging for errors
-logging.basicConfig(level=logging.INFO)
-
 my_secret = os.getenv("BOT_TOKEN")
 
 # Scheduler
