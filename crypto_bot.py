@@ -1110,11 +1110,11 @@ def help_command(update: Update, context: CallbackContext):
 
 
 # Price Fetch
-def get_price(coin):
+def get_price(user_input):
     try:
-        coin = coin.strip().lower()
+        coin_input = user_input.strip().lower()
 
-        # Shortcuts for common symbols
+        # Predefined shortcuts
         symbol_map = {
             "btc": "bitcoin",
             "eth": "ethereum",
@@ -1122,92 +1122,118 @@ def get_price(coin):
             "bnb": "binancecoin",
             "xrp": "ripple"
         }
-        coin = symbol_map.get(coin, coin)
+        coin_input = symbol_map.get(coin_input, coin_input)
 
-        # Step 1: Try direct ID API
-        url = f"https://api.coingecko.com/api/v3/coins/{coin}"
-        response = requests.get(url, timeout=10)
+        # Load all coins from CoinGecko
+        coins = requests.get("https://api.coingecko.com/api/v3/coins/list", timeout=10).json()
 
-        if response.status_code == 200:
-            data = response.json()
-            name = data.get('name', coin.capitalize())
-            symbol = data.get('symbol', '').upper()
-            market_data = data.get('market_data', {})
+        # Try exact match by id
+        coin_id = None
+        for coin in coins:
+            if coin_input == coin["id"]:
+                coin_id = coin["id"]
+                break
+        else:
+            # Try match by symbol
+            matches = [c for c in coins if c["symbol"].lower() == coin_input]
+            if matches:
+                coin_id = matches[0]["id"]
+            else:
+                # Try close match by name or id
+                names = [c["name"].lower() for c in coins]
+                ids = [c["id"] for c in coins]
+                close = get_close_matches(coin_input, names + ids, n=1, cutoff=0.6)
+                if close:
+                    for coin in coins:
+                        if coin["name"].lower() == close[0] or coin["id"] == close[0]:
+                            coin_id = coin["id"]
+                            break
 
-            price = market_data.get('current_price', {}).get('inr', 0)
-            change_24h = market_data.get('price_change_percentage_24h', 0)
-            market_cap_rank = data.get('market_cap_rank', 'N/A')
+        if not coin_id:
+            return f"❌ Coin '*{user_input}*' not found. Try `/coinlist` to see available coins."
 
-            trend_icon = "📈" if change_24h > 0 else "📉" if change_24h < 0 else "➡️"
-            change_color = "🟢" if change_24h > 0 else "🔴" if change_24h < 0 else "⚪"
+        # Fetch full coin market data
+        url = f"https://api.coingecko.com/api/v3/coins/{coin_id}"
+        res = requests.get(url, timeout=10)
+        if res.status_code != 200:
+            return f"⚠️ Unable to fetch price for *{user_input}*. Try again."
 
-            return (f"💎 *{name}* ({symbol}) {change_color}\n"
-                    f"━━━━━━━━━━━━━━━━━━━━━\n"
-                    f"💰 **₹{price:,.2f}** INR\n"
-                    f"{trend_icon} 24h: **{change_24h:+.2f}%**\n"
-                    f"🏆 Rank: **#{market_cap_rank}**\n"
-                    f"⏰ *Live Data*")
+        data = res.json()
+        name = data.get("name", coin_id.capitalize())
+        symbol = data.get("symbol", "").upper()
+        price = data.get("market_data", {}).get("current_price", {}).get("inr", 0)
+        change = data.get("market_data", {}).get("price_change_percentage_24h", 0)
+        rank = data.get("market_cap_rank", "N/A")
 
-        # Step 2: If failed, search from coin list
-        coin_list = requests.get("https://api.coingecko.com/api/v3/coins/list", timeout=10).json()
-        coin_ids = [c['id'] for c in coin_list]
-        coin_names = {c['id']: c['name'] for c in coin_list}
-        coin_symbols = {c['id']: c['symbol'] for c in coin_list}
+        trend = "📈" if change > 0 else "📉" if change < 0 else "➡️"
+        color = "🟢" if change > 0 else "🔴" if change < 0 else "⚪"
 
-        # Try close matches on ID, Name, and Symbol
-        close_ids = get_close_matches(coin, coin_ids, n=1, cutoff=0.6)
-        if not close_ids:
-            close_ids = [c['id'] for c in coin_list if coin in c['symbol'] or coin in c['name'].lower()]
-
-        if close_ids:
-            return get_price(close_ids[0])
-
-        return f"❌ Coin '*{coin}*' not found. Try `/coinlist` to see available coins."
+        return (f"💎 *{name}* ({symbol}) {color}\n"
+                f"━━━━━━━━━━━━━━━━━━━━━\n"
+                f"💰 **₹{price:,.2f}** INR\n"
+                f"{trend} 24h: **{change:+.2f}%**\n"
+                f"🏆 Rank: **#{rank}**\n"
+                f"⏰ *Live Data*")
 
     except requests.exceptions.Timeout:
         return "⏱️ Market data temporarily unavailable. Please try again."
     except Exception as e:
-        print(f"[get_price error] {e}")
-        return "⚠️ Unable to fetch price data. Try again in a moment."
-
+        print("[get_price error]", e)
+        return "⚠️ Unexpected error occurred while fetching price."
 # Price Command
-
-
 def price(update: Update, context: CallbackContext):
-    if len(context.args) == 0:
+    if not context.args:
         update.message.reply_text(
-            "❌ Please provide a coin name like bitcoin or ethereum.")
+            "❌ Please provide a coin name. Example: `/price bitcoin`", parse_mode='Markdown')
         return
-    coin = context.args[0].lower()
-    msg = get_price(coin)
-    update.message.reply_text(msg, parse_mode='Markdown')
 
+    # Join all words for multi-word coin names like "shiba inu"
+    coin_query = " ".join(context.args).lower()
+    msg = get_price(coin_query)
+    
+    try:
+        update.message.reply_text(msg, parse_mode='Markdown', disable_web_page_preview=True)
+    except Exception as e:
+        print("[price command error]", e)
+        # Fallback if markdown formatting fails
+        update.message.reply_text("⚠️ Failed to send formatted message.\n" + msg)
 
 # Shortcuts
 
+def btc_command(update: Update, context: CallbackContext):
+    msg = get_price("btc")
+    update.message.reply_text(msg, parse_mode='Markdown', disable_web_page_preview=True)
 
-def btc_command(update, context):
-    update.message.reply_text(get_price("btc"), parse_mode='Markdown')
+def eth_command(update: Update, context: CallbackContext):
+    msg = get_price("eth")
+    update.message.reply_text(msg, parse_mode='Markdown', disable_web_page_preview=True)
 
-def eth_command(update, context):
-    update.message.reply_text(get_price("eth"), parse_mode='Markdown')
-
-def doge_command(update, context):
-    update.message.reply_text(get_price("doge"), parse_mode='Markdown')
-
-
+def doge_command(update: Update, context: CallbackContext):
+    msg = get_price("doge")
+    update.message.reply_text(msg, parse_mode='Markdown', disable_web_page_preview=True)
 
 # Inline Buttons
 
-
 def price_buttons(update: Update, context: CallbackContext):
-    keyboard = [[
-        InlineKeyboardButton("Bitcoin 💰", callback_data='bitcoin'),
-        InlineKeyboardButton("Ethereum ⚡", callback_data='ethereum'),
-        InlineKeyboardButton("Dogecoin 🐶", callback_data='dogecoin'),
-    ]]
+    keyboard = [
+        [InlineKeyboardButton("Bitcoin 💰", callback_data='btc')],
+        [InlineKeyboardButton("Ethereum ⚡", callback_data='eth')],
+        [InlineKeyboardButton("Dogecoin 🐶", callback_data='doge')],
+    ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text('Select a coin:', reply_markup=reply_markup)
+    update.message.reply_text('💱 *Select a coin to get live price:*', reply_markup=reply_markup, parse_mode='Markdown')
+    
+def coin_button_handler(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query.answer()
+
+    coin = query.data.lower()  # 'btc', 'eth', etc.
+    msg = get_price(coin)
+    
+    try:
+        query.edit_message_text(msg, parse_mode='Markdown', disable_web_page_preview=True)
+    except:
+        query.edit_message_text("⚠️ Failed to display price.\n" + msg)
 
 def fancy_command(update: Update, context: CallbackContext):
     if context.args:
@@ -1516,7 +1542,7 @@ def main():
         dp.add_error_handler(error_handler)
         dp.add_handler(CommandHandler("quiz", quiz_command))
         dp.add_handler(CallbackQueryHandler(quiz_response, pattern="^quiz\|"))
-        dp.add_handler(CallbackQueryHandler(coin_button_handler, pattern="^(bitcoin|ethereum|dogecoin)$"))
+        dp.add_handler(CallbackQueryHandler(coin_button_handler, pattern="^(btc|eth|doge)$"))
         dp.add_handler(CallbackQueryHandler(button_handler))
         dp.add_handler(MessageHandler(Filters.text & ~Filters.command, auto_reply_handler))
         schedule_digest(updater)  # ⏰ Sends message daily at 9AM
