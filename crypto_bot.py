@@ -44,10 +44,9 @@ def ensure_user_data(user_id):
 
 # Logging for errors
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # Bot Token
-my_secret = os.environ['BOT_TOKEN']
+my_secret = os.environ[BOT_TOKEN]
 
 # Scheduler
 scheduler = BackgroundScheduler(timezone=utc)
@@ -1512,6 +1511,7 @@ def main():
         dp.add_handler(CommandHandler("quiz", quiz_command))
         dp.add_handler(CallbackQueryHandler(quiz_response, pattern="^quiz\|"))
         dp.add_handler(CallbackQueryHandler(coin_button_handler, pattern="^(bitcoin|ethereum|dogecoin)$"))
+        dp.add_handler(CallbackQueryHandler(button_handler))
         dp.add_handler(MessageHandler(Filters.text & ~Filters.command, auto_reply_handler))
         schedule_digest(updater)  # ⏰ Sends message daily at 9AM
         print("🤖 Bot starting...")
