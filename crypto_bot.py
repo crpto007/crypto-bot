@@ -15,6 +15,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 from telegram import InlineQueryResultArticle, InputTextMessageContent
 from telegram.ext import InlineQueryHandler, MessageHandler, Filters
 from pytz import utc
+from telegram.ext import DispatcherHandlerStop
 import matplotlib
 try:
     import snscrape.modules.twitter as sntwitter
@@ -92,6 +93,8 @@ quiz_questions = [
         "answer": "Non-Fungible Token"
     }
 ]
+def error_handler(update, context):
+    logger.error(msg="Exception while handling update:", exc_info=context.error)
 
 def watch_command(update: Update, context: CallbackContext):
     user_id = str(update.effective_user.id)
@@ -1508,6 +1511,7 @@ def main():
         dp.add_handler(CommandHandler("watch", watch_command))
         dp.add_handler(CommandHandler("clearwatch", clear_watchlist))
         dp.add_handler(CommandHandler("removewatch", remove_watch))
+        dp.add_error_handler(error_handler)
         dp.add_handler(CommandHandler("quiz", quiz_command))
         dp.add_handler(CallbackQueryHandler(quiz_response, pattern="^quiz\|"))
         dp.add_handler(CallbackQueryHandler(coin_button_handler, pattern="^(bitcoin|ethereum|dogecoin)$"))
