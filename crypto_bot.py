@@ -4,6 +4,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
 from telegram.error import Conflict
 import requests
+from difflib import get_close_matches
 import json
 import matplotlib.pyplot as plt
 import io
@@ -1109,13 +1110,11 @@ def help_command(update: Update, context: CallbackContext):
 
 
 # Price Fetch
-
-
 def get_price(coin):
     try:
         coin = coin.strip().lower()
 
-        # Map short symbols to full CoinGecko IDs
+        # Shortcuts for common symbols
         symbol_map = {
             "btc": "bitcoin",
             "eth": "ethereum",
@@ -1125,7 +1124,7 @@ def get_price(coin):
         }
         coin = symbol_map.get(coin, coin)
 
-        # Full detail API
+        # Step 1: Try direct ID API
         url = f"https://api.coingecko.com/api/v3/coins/{coin}"
         response = requests.get(url, timeout=10)
 
@@ -1149,20 +1148,24 @@ def get_price(coin):
                     f"🏆 Rank: **#{market_cap_rank}**\n"
                     f"⏰ *Live Data*")
 
-        # Fallback: simple price API
-        simple_url = f"https://api.coingecko.com/api/v3/simple/price?ids={coin}&vs_currencies=inr"
-        simple_response = requests.get(simple_url, timeout=10)
-        if simple_response.status_code == 200:
-            simple_data = simple_response.json()
-            if coin in simple_data and 'inr' in simple_data[coin]:
-                price = simple_data[coin]["inr"]
-                return f"💰 **{coin.capitalize()}** → ₹{price:,.2f}"
+        # Step 2: If failed, search from coin list
+        coin_list = requests.get("https://api.coingecko.com/api/v3/coins/list", timeout=10).json()
+        coin_ids = [c['id'] for c in coin_list]
+        coin_names = {c['id']: c['name'] for c in coin_list}
+        coin_symbols = {c['id']: c['symbol'] for c in coin_list}
 
-        return f"❌ Coin '{coin}' not found. Try `/coinlist` to see available coins."
+        # Try close matches on ID, Name, and Symbol
+        close_ids = get_close_matches(coin, coin_ids, n=1, cutoff=0.6)
+        if not close_ids:
+            close_ids = [c['id'] for c in coin_list if coin in c['symbol'] or coin in c['name'].lower()]
+
+        if close_ids:
+            return get_price(close_ids[0])
+
+        return f"❌ Coin '*{coin}*' not found. Try `/coinlist` to see available coins."
 
     except requests.exceptions.Timeout:
         return "⏱️ Market data temporarily unavailable. Please try again."
-
     except Exception as e:
         print(f"[get_price error] {e}")
         return "⚠️ Unable to fetch price data. Try again in a moment."
