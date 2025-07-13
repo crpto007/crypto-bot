@@ -47,8 +47,7 @@ def ensure_user_data(user_id):
 logging.basicConfig(level=logging.INFO)
 
 # Bot Token
-my_secret = os.environ['BOT_TOKEN']
-
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 # Scheduler
 scheduler = BackgroundScheduler(timezone=utc)
 scheduler.start()
