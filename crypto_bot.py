@@ -47,9 +47,6 @@ def ensure_user_data(user_id):
 logging.basicConfig(level=logging.INFO)
 
 my_secret = os.getenv("BOT_TOKEN")
-if not my_secret:
-    print("❌ BOT_TOKEN not found!")
-    return
 
 # Scheduler
 scheduler = BackgroundScheduler(timezone=utc)
