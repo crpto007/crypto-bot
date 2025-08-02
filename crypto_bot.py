@@ -4,7 +4,6 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
 from telegram.error import Conflict
 import requests
-from difflib import get_close_matches
 import json
 import matplotlib.pyplot as plt
 import io
@@ -16,7 +15,6 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 from telegram import InlineQueryResultArticle, InputTextMessageContent
 from telegram.ext import InlineQueryHandler, MessageHandler, Filters
 from pytz import utc
-from telegram.ext import DispatcherHandlerStop
 import matplotlib
 try:
     import snscrape.modules.twitter as sntwitter
@@ -27,7 +25,6 @@ except ImportError:
     sntwitter = None
 
 matplotlib.use('Agg')  # Use non-interactive backend
-import matplotlib.pyplot as plt
 from io import BytesIO
 from datetime import datetime
 from dotenv import load_dotenv
@@ -44,7 +41,15 @@ def ensure_user_data(user_id):
             "coins": 0
         }
 
-my_secret = os.getenv("BOT_TOKEN")
+# Logging for errors
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Bot Token
+my_secret = os.getenv('BOT_TOKEN')
+if not my_secret:
+    print("❌ BOT_TOKEN not found. Exiting.")
+    exit()
 
 # Scheduler
 scheduler = BackgroundScheduler(timezone=utc)
@@ -90,8 +95,6 @@ quiz_questions = [
         "answer": "Non-Fungible Token"
     }
 ]
-def error_handler(update, context):
-    logger.error(msg="Exception while handling update:", exc_info=context.error)
 
 def watch_command(update: Update, context: CallbackContext):
     user_id = str(update.effective_user.id)
@@ -1107,11 +1110,13 @@ def help_command(update: Update, context: CallbackContext):
 
 
 # Price Fetch
-def get_price(user_input):
-    try:
-        coin_input = user_input.strip().lower()
 
-        # Predefined shortcuts
+
+def get_price(coin):
+    try:
+        coin = coin.strip().lower()
+
+        # Map short symbols to full CoinGecko IDs
         symbol_map = {
             "btc": "bitcoin",
             "eth": "ethereum",
@@ -1119,118 +1124,94 @@ def get_price(user_input):
             "bnb": "binancecoin",
             "xrp": "ripple"
         }
-        coin_input = symbol_map.get(coin_input, coin_input)
+        coin = symbol_map.get(coin, coin)
 
-        # Load all coins from CoinGecko
-        coins = requests.get("https://api.coingecko.com/api/v3/coins/list", timeout=10).json()
+        # Full detail API
+        url = f"https://api.coingecko.com/api/v3/coins/{coin}"
+        response = requests.get(url, timeout=10)
 
-        # Try exact match by id
-        coin_id = None
-        for coin in coins:
-            if coin_input == coin["id"]:
-                coin_id = coin["id"]
-                break
-        else:
-            # Try match by symbol
-            matches = [c for c in coins if c["symbol"].lower() == coin_input]
-            if matches:
-                coin_id = matches[0]["id"]
-            else:
-                # Try close match by name or id
-                names = [c["name"].lower() for c in coins]
-                ids = [c["id"] for c in coins]
-                close = get_close_matches(coin_input, names + ids, n=1, cutoff=0.6)
-                if close:
-                    for coin in coins:
-                        if coin["name"].lower() == close[0] or coin["id"] == close[0]:
-                            coin_id = coin["id"]
-                            break
+        if response.status_code == 200:
+            data = response.json()
+            name = data.get('name', coin.capitalize())
+            symbol = data.get('symbol', '').upper()
+            market_data = data.get('market_data', {})
 
-        if not coin_id:
-            return f"❌ Coin '*{user_input}*' not found. Try `/coinlist` to see available coins."
+            price = market_data.get('current_price', {}).get('inr', 0)
+            change_24h = market_data.get('price_change_percentage_24h', 0)
+            market_cap_rank = data.get('market_cap_rank', 'N/A')
 
-        # Fetch full coin market data
-        url = f"https://api.coingecko.com/api/v3/coins/{coin_id}"
-        res = requests.get(url, timeout=10)
-        if res.status_code != 200:
-            return f"⚠️ Unable to fetch price for *{user_input}*. Try again."
+            trend_icon = "📈" if change_24h > 0 else "📉" if change_24h < 0 else "➡️"
+            change_color = "🟢" if change_24h > 0 else "🔴" if change_24h < 0 else "⚪"
 
-        data = res.json()
-        name = data.get("name", coin_id.capitalize())
-        symbol = data.get("symbol", "").upper()
-        price = data.get("market_data", {}).get("current_price", {}).get("inr", 0)
-        change = data.get("market_data", {}).get("price_change_percentage_24h", 0)
-        rank = data.get("market_cap_rank", "N/A")
+            return (f"💎 *{name}* ({symbol}) {change_color}\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"💰 **₹{price:,.2f}** INR\n"
+                    f"{trend_icon} 24h: **{change_24h:+.2f}%**\n"
+                    f"🏆 Rank: **#{market_cap_rank}**\n"
+                    f"⏰ *Live Data*")
 
-        trend = "📈" if change > 0 else "📉" if change < 0 else "➡️"
-        color = "🟢" if change > 0 else "🔴" if change < 0 else "⚪"
+        # Fallback: simple price API
+        simple_url = f"https://api.coingecko.com/api/v3/simple/price?ids={coin}&vs_currencies=inr"
+        simple_response = requests.get(simple_url, timeout=10)
+        if simple_response.status_code == 200:
+            simple_data = simple_response.json()
+            if coin in simple_data and 'inr' in simple_data[coin]:
+                price = simple_data[coin]["inr"]
+                return f"💰 **{coin.capitalize()}** → ₹{price:,.2f}"
 
-        return (f"💎 *{name}* ({symbol}) {color}\n"
-                f"━━━━━━━━━━━━━━━━━━━━━\n"
-                f"💰 **₹{price:,.2f}** INR\n"
-                f"{trend} 24h: **{change:+.2f}%**\n"
-                f"🏆 Rank: **#{rank}**\n"
-                f"⏰ *Live Data*")
+        return f"❌ Coin '{coin}' not found. Try `/coinlist` to see available coins."
 
     except requests.exceptions.Timeout:
         return "⏱️ Market data temporarily unavailable. Please try again."
-    except Exception as e:
-        print("[get_price error]", e)
-        return "⚠️ Unexpected error occurred while fetching price."
-# Price Command
-def price(update: Update, context: CallbackContext):
-    if not context.args:
-        update.message.reply_text(
-            "❌ Please provide a coin name. Example: `/price bitcoin`", parse_mode='Markdown')
-        return
 
-    # Join all words for multi-word coin names like "shiba inu"
-    coin_query = " ".join(context.args).lower()
-    msg = get_price(coin_query)
-    
-    try:
-        update.message.reply_text(msg, parse_mode='Markdown', disable_web_page_preview=True)
     except Exception as e:
-        print("[price command error]", e)
-        # Fallback if markdown formatting fails
-        update.message.reply_text("⚠️ Failed to send formatted message.\n" + msg)
+        print(f"[get_price error] {e}")
+        return "⚠️ Unable to fetch price data. Try again in a moment."
+
+# Price Command
+
+
+def price(update: Update, context: CallbackContext):
+    try:
+        if len(context.args) == 0:
+            update.message.reply_text(
+                "❌ Please provide a coin name like bitcoin or ethereum.")
+            return
+
+        coin = context.args[0].lower()
+        msg = get_price(coin)
+        update.message.reply_text(msg, parse_mode='Markdown')
+
+    except Exception as e:
+        update.message.reply_text("⚠️ Error fetching coin price. Try again later.")
+        print(f"[price command error] {e}")
+
 
 # Shortcuts
 
-def btc_command(update: Update, context: CallbackContext):
-    msg = get_price("btc")
-    update.message.reply_text(msg, parse_mode='Markdown', disable_web_page_preview=True)
 
-def eth_command(update: Update, context: CallbackContext):
-    msg = get_price("eth")
-    update.message.reply_text(msg, parse_mode='Markdown', disable_web_page_preview=True)
+def btc_command(update, context):
+    update.message.reply_text(get_price("btc"), parse_mode='Markdown')
 
-def doge_command(update: Update, context: CallbackContext):
-    msg = get_price("doge")
-    update.message.reply_text(msg, parse_mode='Markdown', disable_web_page_preview=True)
+def eth_command(update, context):
+    update.message.reply_text(get_price("eth"), parse_mode='Markdown')
+
+def doge_command(update, context):
+    update.message.reply_text(get_price("doge"), parse_mode='Markdown')
+
+
 
 # Inline Buttons
 
-def price_buttons(update: Update, context: CallbackContext):
-    keyboard = [
-        [InlineKeyboardButton("Bitcoin 💰", callback_data='btc')],
-        [InlineKeyboardButton("Ethereum ⚡", callback_data='eth')],
-        [InlineKeyboardButton("Dogecoin 🐶", callback_data='doge')],
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text('💱 *Select a coin to get live price:*', reply_markup=reply_markup, parse_mode='Markdown')
-    
-def coin_button_handler(update: Update, context: CallbackContext):
-    query = update.callback_query
-    query.answer()
 
-    coin = query.data.lower()  # 'btc', 'eth', etc.
-    msg = get_price(coin)
-    
-    try:
-        query.edit_message_text(msg, parse_mode='Markdown', disable_web_page_preview=True)
-    except:
-        query.edit_message_text("⚠️ Failed to display price.\n" + msg)
+def price_buttons(update: Update, context: CallbackContext):
+    keyboard = [[
+        InlineKeyboardButton("Bitcoin 💰", callback_data='bitcoin'),
+        InlineKeyboardButton("Ethereum ⚡", callback_data='ethereum'),
+        InlineKeyboardButton("Dogecoin 🐶", callback_data='dogecoin'),
+    ]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.message.reply_text('Select a coin:', reply_markup=reply_markup)
 
 def fancy_command(update: Update, context: CallbackContext):
     if context.args:
@@ -1486,10 +1467,13 @@ def main():
             print("❌ BOT_TOKEN environment variable not set!")
             return
 
-        from keep_alive import keep_alive
+        # from keep_alive import keep_alive
         keep_alive()
 
-        my_secret = os.environ['BOT_TOKEN']
+        my_secret = os.getenv('BOT_TOKEN')
+if not my_secret:
+    print("❌ BOT_TOKEN not found. Exiting.")
+    exit()
         updater = Updater(token=my_secret, use_context=True)
         dp = updater.dispatcher
 
@@ -1536,11 +1520,9 @@ def main():
         dp.add_handler(CommandHandler("watch", watch_command))
         dp.add_handler(CommandHandler("clearwatch", clear_watchlist))
         dp.add_handler(CommandHandler("removewatch", remove_watch))
-        dp.add_error_handler(error_handler)
         dp.add_handler(CommandHandler("quiz", quiz_command))
         dp.add_handler(CallbackQueryHandler(quiz_response, pattern="^quiz\|"))
-        dp.add_handler(CallbackQueryHandler(coin_button_handler, pattern="^(btc|eth|doge)$"))
-        dp.add_handler(CallbackQueryHandler(button_handler))
+        dp.add_handler(CallbackQueryHandler(coin_button_handler, pattern="^(bitcoin|ethereum|dogecoin)$"))
         dp.add_handler(MessageHandler(Filters.text & ~Filters.command, auto_reply_handler))
         schedule_digest(updater)  # ⏰ Sends message daily at 9AM
         print("🤖 Bot starting...")
@@ -1553,4 +1535,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
