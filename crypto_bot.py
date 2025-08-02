@@ -1467,6 +1467,13 @@ def main():
             print("❌ BOT_TOKEN environment variable not set!")
             return
 
+        # # from keep_alive import keep_alive (not needed on Render)
+        # keep_alive() removed for Render compatibility
+
+        my_secret = os.getenv('BOT_TOKEN')
+if not my_secret:
+    print("❌ BOT_TOKEN not found. Exiting.")
+    exit()
         updater = Updater(token=my_secret, use_context=True)
         dp = updater.dispatcher
 
@@ -1528,6 +1535,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
