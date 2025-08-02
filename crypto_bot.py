@@ -25,6 +25,7 @@ except ImportError:
     sntwitter = None
 
 matplotlib.use('Agg')  # Use non-interactive backend
+import matplotlib.pyplot as plt
 from io import BytesIO
 from datetime import datetime
 from dotenv import load_dotenv
@@ -46,10 +47,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Bot Token
-my_secret = os.getenv('BOT_TOKEN')
-if not my_secret:
-    print("❌ BOT_TOKEN not found. Exiting.")
-    exit()
+my_secret = os.environ['BOT_TOKEN']
 
 # Scheduler
 scheduler = BackgroundScheduler(timezone=utc)
@@ -1172,19 +1170,13 @@ def get_price(coin):
 
 
 def price(update: Update, context: CallbackContext):
-    try:
-        if len(context.args) == 0:
-            update.message.reply_text(
-                "❌ Please provide a coin name like bitcoin or ethereum.")
-            return
-
-        coin = context.args[0].lower()
-        msg = get_price(coin)
-        update.message.reply_text(msg, parse_mode='Markdown')
-
-    except Exception as e:
-        update.message.reply_text("⚠️ Error fetching coin price. Try again later.")
-        print(f"[price command error] {e}")
+    if len(context.args) == 0:
+        update.message.reply_text(
+            "❌ Please provide a coin name like bitcoin or ethereum.")
+        return
+    coin = context.args[0].lower()
+    msg = get_price(coin)
+    update.message.reply_text(msg, parse_mode='Markdown')
 
 
 # Shortcuts
@@ -1467,13 +1459,10 @@ def main():
             print("❌ BOT_TOKEN environment variable not set!")
             return
 
-        # # from keep_alive import keep_alive (not needed on Render)
-        # keep_alive() removed for Render compatibility
+        from keep_alive import keep_alive
+        keep_alive()
 
-        my_secret = os.getenv('BOT_TOKEN')
-if not my_secret:
-    print("❌ BOT_TOKEN not found. Exiting.")
-    exit()
+        my_secret = os.environ['BOT_TOKEN']
         updater = Updater(token=my_secret, use_context=True)
         dp = updater.dispatcher
 
@@ -1535,3 +1524,4 @@ if not my_secret:
 
 if __name__ == '__main__':
     main()
+
