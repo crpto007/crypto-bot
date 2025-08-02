@@ -1470,10 +1470,6 @@ def main():
         # from keep_alive import keep_alive
         keep_alive()
 
-        my_secret = os.getenv('BOT_TOKEN')
-if not my_secret:
-    print("❌ BOT_TOKEN not found. Exiting.")
-    exit()
         updater = Updater(token=my_secret, use_context=True)
         dp = updater.dispatcher
 
@@ -1535,3 +1531,4 @@ if not my_secret:
 
 if __name__ == '__main__':
     main()
+
