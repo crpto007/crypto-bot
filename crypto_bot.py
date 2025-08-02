@@ -1466,9 +1466,9 @@ def main():
         if 'BOT_TOKEN' not in os.environ:
             print("❌ BOT_TOKEN environment variable not set!")
             return
+def keep_alive():
+    pass  # No action needed for Render
 
-        # from keep_alive import keep_alive
-        keep_alive()
 
         updater = Updater(token=my_secret, use_context=True)
         dp = updater.dispatcher
@@ -1531,4 +1531,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
