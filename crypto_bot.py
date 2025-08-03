@@ -27,12 +27,13 @@ except ImportError:
     sntwitter = None
 
 matplotlib.use('Agg')  # Use non-interactive backend
-import matplotlib.pyplot as plt
 from io import BytesIO
 from datetime import datetime
 from dotenv import load_dotenv
 import openai
 from threading import Thread
+updater = Updater(BOT_TOKEN, use_context=True)
+dispatcher = updater.dispatcher
 
 # Your Flask app
 app = Flask(__name__)
@@ -61,7 +62,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Bot Token
-my_secret = os.environ['BOT_TOKEN']
+BOT_TOKEN = os.getenv("BOT_TOKEN") or "paste-your-token-here"
+
 
 # Scheduler
 scheduler = BackgroundScheduler(timezone=utc)
@@ -1569,6 +1571,7 @@ if __name__ == '__main__':
     updater.idle()
 
     main()
+
 
 
 
