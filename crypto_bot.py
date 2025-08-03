@@ -31,6 +31,18 @@ from io import BytesIO
 from datetime import datetime
 from dotenv import load_dotenv
 import openai
+from threading import Thread
+
+# Your Flask app
+app = Flask(__name__)
+
+def run_bot():
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == '__main__':
+    Thread(target=run_bot).start()
+    app.run(host="0.0.0.0", port=8080)
 
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -1204,6 +1216,9 @@ def price(update: Update, context: CallbackContext):
     coin = context.args[0].lower()
     msg = get_price(coin)
     update.message.reply_text(msg, parse_mode='HTML')
+def price(update: Update, context: CallbackContext):
+    print("🔔 /price command received")  # LOG
+    ...
 
 # Shortcuts
 
@@ -1549,7 +1564,11 @@ def main():
         print(f"❌ Bot failed to start: {e}")
 
 if __name__ == '__main__':
+    updater.start_polling()
+    updater.idle()
+
     main()
+
 
 
 
