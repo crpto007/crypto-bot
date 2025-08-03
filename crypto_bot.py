@@ -32,8 +32,6 @@ from datetime import datetime
 from dotenv import load_dotenv
 import openai
 from threading import Thread
-updater = Updater(BOT_TOKEN, use_context=True)
-dispatcher = updater.dispatcher
 
 # Your Flask app
 app = Flask(__name__)
@@ -1571,6 +1569,7 @@ if __name__ == '__main__':
     updater.idle()
 
     main()
+
 
 
 
