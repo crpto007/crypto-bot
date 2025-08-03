@@ -1130,6 +1130,11 @@ def get_coin_id(coin_name):
         for page in range(1, 5):  # Check top 1000 coins
             params['page'] = page
             response = requests.get(url, params=params, timeout=10)
+
+            if response.status_code != 200:
+                print(f"[CoinGecko] Error: {response.status_code}")
+                return None
+
             coins = response.json()
 
             for coin in coins:
@@ -1149,6 +1154,9 @@ def get_price(coin):
     try:
         coin = coin.strip().lower()
         coin_id = get_coin_id(coin)
+        print(f"🧪 Coin name input: {coin}")
+        print(f"🧪 Resolved Coin ID: {coin_id}")
+
         if not coin_id:
             return f"❌ Coin '{coin}' not found. Try `/coinlist` to see available coins."
 
@@ -1168,12 +1176,16 @@ def get_price(coin):
             trend_icon = "📈" if change_24h > 0 else "📉" if change_24h < 0 else "➡️"
             change_color = "🟢" if change_24h > 0 else "🔴" if change_24h < 0 else "⚪"
 
-            return (f"💎 *{name}* ({symbol}) {change_color}\n"
-                    f"━━━━━━━━━━━━━━━━━━━━━\n"
-                    f"💰 **₹{price:,.2f}** INR\n"
-                    f"{trend_icon} 24h: **{change_24h:+.2f}%**\n"
-                    f"🏆 Rank: **#{market_cap_rank}**\n"
-                    f"⏰ *Live Data*")
+            message = (
+                f"💎 <b>{name}</b> ({symbol}) {change_color}\n"
+                f"━━━━━━━━━━━━━━━━━━━━━\n"
+                f"💰 <b>₹{price:,.2f}</b> INR\n"
+                f"{trend_icon} 24h: <b>{change_24h:+.2f}%</b>\n"
+                f"🏆 Rank: <b>#{market_cap_rank}</b>\n"
+                f"⏰ <i>Live Data</i>"
+            )
+            print(f"🧪 Final message: {message}")
+            return message
 
         return f"❌ Coin '{coin}' not found. Try `/coinlist` to see available coins."
 
@@ -1187,13 +1199,11 @@ def get_price(coin):
 
 def price(update: Update, context: CallbackContext):
     if len(context.args) == 0:
-        update.message.reply_text(
-            "❌ Please provide a coin name like bitcoin or ethereum.")
+        update.message.reply_text("❌ Please provide a coin name like bitcoin or ethereum.")
         return
     coin = context.args[0].lower()
     msg = get_price(coin)
-    update.message.reply_text(msg, parse_mode='Markdown')
-
+    update.message.reply_text(msg, parse_mode='HTML')
 
 # Shortcuts
 
@@ -1540,6 +1550,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
