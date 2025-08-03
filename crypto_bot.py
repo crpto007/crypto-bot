@@ -3,6 +3,7 @@ import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
 from telegram.error import Conflict
+from bs4 import BeautifulSoup
 import requests
 import json
 import matplotlib.pyplot as plt
@@ -1524,4 +1525,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
