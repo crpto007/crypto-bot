@@ -446,40 +446,49 @@ def ai_question_handler(update, context):
         update.message.reply_text("⚠️ Sorry, AI failed to respond. Try again.")
         print(f"OpenAI Error: {e}")
 
-def airdrops_command(update, context):
-    """Show active & legitimate airdrops with links"""
+from bs4 import BeautifulSoup
+import requests
+
+def airdrops(update: Update, context: CallbackContext):
     try:
-        airdrops_info = """
-🪂 *✅ ACTIVE & LEGIT AIRDROPS*
+        url = "https://coinmarketcap.com/airdrop/"
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        res = requests.get(url, headers=headers)
 
-1️⃣ **Blast Network**  
-🔗 [Claim on Blast](https://blast.com/)  
-• Deposit ETH/USDC on Blast to earn tokens + yield.
+        if res.status_code != 200:
+            update.message.reply_text("❌ Failed to fetch airdrops. Try again later.")
+            return
 
-2️⃣ **Polygon zkEVM Testnet**  
-🔗 [zkEVM Guide & Bridge](https://polygon.technology/polygon-zkevm)  
-• Use devnets/DApps and bridge via official portal to qualify.
+        soup = BeautifulSoup(res.text, "html.parser")
+        rows = soup.select("div.cmc-table__table-wrapper tbody tr")
 
-3️⃣ **Hyperlane (HYPER)**  
-🔗 [Hyperlane Claim](https://twitter.com/0xPolygon/status/1911474150436380821)  
-• Polygon & zkEVM users can pre-claim ~707k HYPER tokens :contentReference[oaicite:1]{index=1}
+        if not rows:
+            update.message.reply_text("⚠️ No live airdrops found.")
+            return
 
-4️⃣ **Fragmetric Airdrop**  
-🔗 [Fragmetric Info](https://dropstab.com/activities)  
-• Active since Jun 27, 2025 – complete quests to claim :contentReference[oaicite:2]{index=2}
+        msg = "🎁 *Live Crypto Airdrops:*\n\n"
+        count = 0
 
----
+        for row in rows[:5]:  # Limit to top 5
+            try:
+                title = row.select_one("a.cmc-link").text.strip()
+                link = "https://coinmarketcap.com" + row.select_one("a.cmc-link")['href']
+                end = row.select_one("td:nth-child(5)").text.strip()
 
-⚠️ *Security First:*  
-‑ Never share private keys  
-‑ Use a fresh wallet for airdrops  
-‑ Verify official websites only  
+                msg += f"*{count+1}. {title}*\n🔗 [Link]({link})\n🪂 Ends: {end}\n\n"
+                count += 1
+            except:
+                continue
 
-💡 Track your airdrop rewards with `/portfolio`.
-        """
-        update.message.reply_text(airdrops_info, parse_mode='Markdown', disable_web_page_preview=True)
+        if count == 0:
+            msg += "No active airdrops found right now."
+
+        update.message.reply_text(msg, parse_mode='Markdown', disable_web_page_preview=True)
+
     except Exception as e:
-        update.message.reply_text(f"❌ Error fetching airdrops: {str(e)}")
+        print(f"[airdrops error] {e}")
+        update.message.reply_text("❌ Error fetching airdrop data.")
+
 def portfolio_command(update, context):
     user_id = str(update.effective_user.id)
     ensure_user_data(user_id)
@@ -1107,31 +1116,48 @@ def help_command(update: Update, context: CallbackContext):
                  "💡 *Pro Tip:* Enable `/autoreply` for hands-free updates")
     update.message.reply_text(help_text, parse_mode='Markdown')
 
+def get_coin_id(coin_name):
+    try:
+        url = "https://api.coingecko.com/api/v3/coins/markets"
+        params = {
+            'vs_currency': 'usd',
+            'order': 'market_cap_desc',
+            'per_page': 250,
+            'page': 1,
+            'sparkline': 'false'
+        }
 
-# Price Fetch
+        for page in range(1, 5):  # Check top 1000 coins
+            params['page'] = page
+            response = requests.get(url, params=params, timeout=10)
+            coins = response.json()
 
+            for coin in coins:
+                if (
+                    coin_name.lower() == coin['symbol'].lower() or
+                    coin_name.lower() == coin['id'].lower() or
+                    coin_name.lower() in coin['name'].lower()
+                ):
+                    return coin['id']
 
+        return None
+
+    except Exception as e:
+        print(f"[get_coin_id error] {e}")
+        return None
 def get_price(coin):
     try:
         coin = coin.strip().lower()
+        coin_id = get_coin_id(coin)
+        if not coin_id:
+            return f"❌ Coin '{coin}' not found. Try `/coinlist` to see available coins."
 
-        # Map short symbols to full CoinGecko IDs
-        symbol_map = {
-            "btc": "bitcoin",
-            "eth": "ethereum",
-            "doge": "dogecoin",
-            "bnb": "binancecoin",
-            "xrp": "ripple"
-        }
-        coin = symbol_map.get(coin, coin)
-
-        # Full detail API
-        url = f"https://api.coingecko.com/api/v3/coins/{coin}"
+        url = f"https://api.coingecko.com/api/v3/coins/{coin_id}"
         response = requests.get(url, timeout=10)
 
         if response.status_code == 200:
             data = response.json()
-            name = data.get('name', coin.capitalize())
+            name = data.get('name', coin_id.capitalize())
             symbol = data.get('symbol', '').upper()
             market_data = data.get('market_data', {})
 
@@ -1149,15 +1175,6 @@ def get_price(coin):
                     f"🏆 Rank: **#{market_cap_rank}**\n"
                     f"⏰ *Live Data*")
 
-        # Fallback: simple price API
-        simple_url = f"https://api.coingecko.com/api/v3/simple/price?ids={coin}&vs_currencies=inr"
-        simple_response = requests.get(simple_url, timeout=10)
-        if simple_response.status_code == 200:
-            simple_data = simple_response.json()
-            if coin in simple_data and 'inr' in simple_data[coin]:
-                price = simple_data[coin]["inr"]
-                return f"💰 **{coin.capitalize()}** → ₹{price:,.2f}"
-
         return f"❌ Coin '{coin}' not found. Try `/coinlist` to see available coins."
 
     except requests.exceptions.Timeout:
@@ -1166,8 +1183,6 @@ def get_price(coin):
     except Exception as e:
         print(f"[get_price error] {e}")
         return "⚠️ Unable to fetch price data. Try again in a moment."
-
-# Price Command
 
 
 def price(update: Update, context: CallbackContext):
@@ -1525,5 +1540,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
