@@ -37,11 +37,6 @@ from threading import Thread
 app = Flask(__name__)
 
 
-
-if __name__ == '__main__':
-    Thread(target=run_bot).start()
-    app.run(host="0.0.0.0", port=8080)
-
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
@@ -1492,16 +1487,7 @@ def status_command(update: Update, context: CallbackContext):
         f"✅ Bot is *LIVE* and responding!\n\nYour User ID: `{user_id}`",
         parse_mode='Markdown'
     )
-def run_bot():
-    updater = Updater(token=BOT_TOKEN, use_context=True)
-    dp = updater.dispatcher
 
-    # yaha saare handlers add karo
-    dp.add_handler(CommandHandler("start", start))
-    # ... baaki sab
-
-    updater.start_polling(drop_pending_updates=True)
-    updater.idle()
 def run_bot():
     updater = Updater(token=BOT_TOKEN, use_context=True)
     dp = updater.dispatcher
@@ -1566,4 +1552,5 @@ def run_bot():
 if __name__ == '__main__':
     Thread(target=run_bot).start()
     app.run(host="0.0.0.0", port=8080)
+
 
