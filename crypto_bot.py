@@ -1496,6 +1496,16 @@ def run_bot():
     updater = Updater(token=BOT_TOKEN, use_context=True)
     dp = updater.dispatcher
 
+    # yaha saare handlers add karo
+    dp.add_handler(CommandHandler("start", start))
+    # ... baaki sab
+
+    updater.start_polling(drop_pending_updates=True)
+    updater.idle()
+def run_bot():
+    updater = Updater(token=BOT_TOKEN, use_context=True)
+    dp = updater.dispatcher
+
     # ---- Saare handlers yaha register karo ----
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("share", share))
@@ -1556,3 +1566,4 @@ def run_bot():
 if __name__ == '__main__':
     Thread(target=run_bot).start()
     app.run(host="0.0.0.0", port=8080)
+
