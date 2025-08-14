@@ -1493,11 +1493,10 @@ def status_command(update: Update, context: CallbackContext):
         parse_mode='Markdown'
     )
 def run_bot():
-    # Create updater here
     updater = Updater(token=BOT_TOKEN, use_context=True)
     dp = updater.dispatcher
 
-    # Register all handlers
+    # ---- Saare handlers yaha register karo ----
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("share", share))
     dp.add_handler(CommandHandler("help", help_command))
