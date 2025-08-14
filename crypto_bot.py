@@ -1548,9 +1548,9 @@ def run_bot():
     print("✅ Bot is running!")
     updater.idle()
 
-
 if __name__ == '__main__':
-    Thread(target=run_bot).start()
+    updater.start_polling(drop_pending_updates=True)
     app.run(host="0.0.0.0", port=8080)
+
 
 
