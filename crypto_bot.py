@@ -36,9 +36,7 @@ from threading import Thread
 # Your Flask app
 app = Flask(__name__)
 
-def run_bot():
-    updater.start_polling()
-    updater.idle()
+
 
 if __name__ == '__main__':
     Thread(target=run_bot).start()
@@ -1494,79 +1492,68 @@ def status_command(update: Update, context: CallbackContext):
         f"✅ Bot is *LIVE* and responding!\n\nYour User ID: `{user_id}`",
         parse_mode='Markdown'
     )
-# Main
-def main():
-    try:
-        if 'BOT_TOKEN' not in os.environ:
-            print("❌ BOT_TOKEN environment variable not set!")
-            return
+def run_bot():
+    # Create updater here
+    updater = Updater(token=BOT_TOKEN, use_context=True)
+    dp = updater.dispatcher
 
-        from keep_alive import keep_alive
-        keep_alive()
+    # Register all handlers
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("share", share))
+    dp.add_handler(CommandHandler("help", help_command))
+    dp.add_handler(CommandHandler("plot", plot_command))
+    dp.add_handler(CommandHandler("price", price))
+    dp.add_handler(CommandHandler("btc", btc_command))
+    dp.add_handler(CommandHandler("eth", eth_command))
+    dp.add_handler(CommandHandler("doge", doge_command))
+    dp.add_handler(CommandHandler("coins", price_buttons))
+    dp.add_handler(CommandHandler("fancy", fancy_command))
+    dp.add_handler(CommandHandler("autobtc", auto_btc))
+    dp.add_handler(CommandHandler("stopbtc", stop_btc))
+    dp.add_handler(CommandHandler("trending", trending_command))
+    dp.add_handler(CommandHandler("coinlist", coinList_command))
+    dp.add_handler(CallbackQueryHandler(button_handler))
+    dp.add_handler(CommandHandler("graph", graph_command))
+    dp.add_handler(CommandHandler("logoprice", logo_price_command))
+    dp.add_handler(InlineQueryHandler(inline_query))
+    dp.add_handler(CommandHandler("addwatch", add_watch))
+    dp.add_handler(CommandHandler("watchlist", view_watchlist))
+    dp.add_handler(CommandHandler("autoreply", enable_auto_reply))
+    dp.add_handler(CommandHandler("stopautoreply", disable_auto_reply))
+    dp.add_handler(CommandHandler("realtimegraph", real_time_graph))
+    dp.add_handler(CommandHandler("stopgraph", stop_real_time_graph))
+    dp.add_handler(CommandHandler("setalert", set_alert))
+    dp.add_handler(CommandHandler("viewalerts", view_alerts))
+    dp.add_handler(CommandHandler("removealert", remove_alert))
+    dp.add_handler(CommandHandler("ainews", ai_news_summary))
+    dp.add_handler(CommandHandler("sentiment", market_sentiment))
+    dp.add_handler(CommandHandler("chatgpt", chatgpt_auto_reply))
+    dp.add_handler(CommandHandler("airdrops", airdrops))
+    dp.add_handler(CommandHandler("portfolio", portfolio_command))
+    dp.add_handler(CommandHandler("addcoin", addcoin_command))
+    dp.add_handler(CommandHandler("removecoin", removecoin_command))
+    dp.add_handler(CommandHandler("clearportfolio", clearportfolio_command))
+    dp.add_handler(CommandHandler("dominance", dominance_command))
+    dp.add_handler(CommandHandler("predict", predict_command))
+    dp.add_handler(CommandHandler("status", status_command))
+    dp.add_handler(CommandHandler("mywallet", mywallet_command))
+    dp.add_handler(CommandHandler("watch", watch_command))
+    dp.add_handler(CommandHandler("clearwatch", clear_watchlist))
+    dp.add_handler(CommandHandler("removewatch", remove_watch))
+    dp.add_handler(CommandHandler("quiz", quiz_command))
+    dp.add_handler(CallbackQueryHandler(quiz_response, pattern="^quiz\|"))
+    dp.add_handler(CallbackQueryHandler(coin_button_handler, pattern="^(bitcoin|ethereum|dogecoin)$"))
+    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, auto_reply_handler))
 
-        my_secret = os.environ['BOT_TOKEN']
-        updater = Updater(token=my_secret, use_context=True)
-        dp = updater.dispatcher
+    # Daily digest
+    schedule_digest(updater)
 
-        # Add all your handlers
-        dp.add_handler(CommandHandler("start", start))
-        dp.add_handler(CommandHandler("share", share))
-        dp.add_handler(CommandHandler("help", help_command))
-        dp.add_handler(CommandHandler("plot", plot_command))
-        dp.add_handler(CommandHandler("price", price))
-        dp.add_handler(CommandHandler("btc", btc_command))
-        dp.add_handler(CommandHandler("eth", eth_command))
-        dp.add_handler(CommandHandler("doge", doge_command))
-        dp.add_handler(CommandHandler("coins", price_buttons))
-        dp.add_handler(CommandHandler("fancy", fancy_command))
-        dp.add_handler(CommandHandler("autobtc", auto_btc))
-        dp.add_handler(CommandHandler("stopbtc", stop_btc))
-        dp.add_handler(CommandHandler("trending", trending_command))
-        dp.add_handler(CommandHandler("coinlist", coinList_command))
-        dp.add_handler(CallbackQueryHandler(button_handler))
-        dp.add_handler(CommandHandler("graph", graph_command))
-        dp.add_handler(CommandHandler("logoprice", logo_price_command))
-        dp.add_handler(InlineQueryHandler(inline_query))
-        dp.add_handler(CommandHandler("addwatch", add_watch))
-        dp.add_handler(CommandHandler("watchlist", view_watchlist))
-        dp.add_handler(CommandHandler("autoreply", enable_auto_reply))
-        dp.add_handler(CommandHandler("stopautoreply", disable_auto_reply))
-        dp.add_handler(CommandHandler("realtimegraph", real_time_graph))
-        dp.add_handler(CommandHandler("stopgraph", stop_real_time_graph))
-        dp.add_handler(CommandHandler("setalert", set_alert))
-        dp.add_handler(CommandHandler("viewalerts", view_alerts))
-        dp.add_handler(CommandHandler("removealert", remove_alert))
-        dp.add_handler(CommandHandler("ainews", ai_news_summary))
-        dp.add_handler(CommandHandler("sentiment", market_sentiment))
-        dp.add_handler(CommandHandler("chatgpt", chatgpt_auto_reply))
-        dp.add_handler(CommandHandler("airdrops", airdrops_command))
-        dp.add_handler(CommandHandler("portfolio", portfolio_command))
-        dp.add_handler(CommandHandler("addcoin", addcoin_command))
-        dp.add_handler(CommandHandler("removecoin", removecoin_command))
-        dp.add_handler(CommandHandler("clearportfolio", clearportfolio_command))
-        dp.add_handler(CommandHandler("dominance", dominance_command))
-        dp.add_handler(CommandHandler("predict", predict_command))
-        dp.add_handler(CommandHandler("status", status_command))
-        dp.add_handler(CommandHandler("mywallet", mywallet_command))
-        dp.add_handler(CommandHandler("watch", watch_command))
-        dp.add_handler(CommandHandler("clearwatch", clear_watchlist))
-        dp.add_handler(CommandHandler("removewatch", remove_watch))
-        dp.add_handler(CommandHandler("quiz", quiz_command))
-        dp.add_handler(CallbackQueryHandler(quiz_response, pattern="^quiz\|"))
-        dp.add_handler(CallbackQueryHandler(coin_button_handler, pattern="^(bitcoin|ethereum|dogecoin)$"))
-        dp.add_handler(MessageHandler(Filters.text & ~Filters.command, auto_reply_handler))
-        schedule_digest(updater)  # ⏰ Sends message daily at 9AM
-        print("🤖 Bot starting...")
-        updater.start_polling(drop_pending_updates=True)
-        print("✅ Bot is running!")
-        updater.idle()
-
-    except Exception as e:
-        print(f"❌ Bot failed to start: {e}")
-
-if __name__ == '__main__':
-    updater.start_polling()
+    print("🤖 Bot starting...")
+    updater.start_polling(drop_pending_updates=True)
+    print("✅ Bot is running!")
     updater.idle()
 
-    main()
 
+if __name__ == '__main__':
+    Thread(target=run_bot).start()
+    app.run(host="0.0.0.0", port=8080)
