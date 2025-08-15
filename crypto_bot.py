@@ -72,7 +72,15 @@ alerts_db = {}
 share_link = {}
 user_portfolios = {}
 user_data = {}  # Moved before ensure_user_data
-
+def run_bot():
+    updater = Updater(token=BOT_TOKEN, use_context=True)
+    dp = updater.dispatcher
+    # yaha pe saare handlers add karo...
+    schedule_digest(updater)
+    print("🤖 Bot starting...")
+    updater.start_polling(drop_pending_updates=True)
+    print("✅ Bot is running!")
+    updater.idle()
 # ----------------- Utility Functions -----------------
 def ensure_user_data(user_id):
     if user_id not in user_data:
@@ -1521,6 +1529,7 @@ if __name__ == '__main__':
 
     # Flask को main thread में चलाओ
     app.run(host="0.0.0.0", port=8080)
+
 
 
 
