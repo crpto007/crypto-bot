@@ -1457,43 +1457,6 @@ def status_command(update: Update, context: CallbackContext):
         parse_mode='Markdown'
     )
 
-from telegram import Update
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, InlineQueryHandler, MessageHandler, Filters, CallbackContext
-import threading
-from flask import Flask
-
-# --- CONFIG ---
-BOT_TOKEN = "YOUR_BOT_TOKEN"
-
-# --- Flask app for hosting ---
-app = Flask(__name__)
-
-@app.route('/')
-def home():
-    return "Bot is running!"
-
-# --- Placeholder handler functions ---
-def start(update: Update, context: CallbackContext):
-    update.message.reply_text("Hello! Bot started.")
-
-def share(update: Update, context: CallbackContext):
-    update.message.reply_text("Share command executed.")
-
-def help_command(update: Update, context: CallbackContext):
-    update.message.reply_text("Help command executed.")
-
-# Add placeholder for all handlers used in run_bot
-def dummy_handler(update: Update, context: CallbackContext):
-    update.message.reply_text("Command is working.")
-
-# --- Schedule digest placeholder ---
-def schedule_digest(updater):
-    pass
-
-# --- Telegram Bot runner ---
-def run_bot():
-    updater = Updater(token=BOT_TOKEN, use_context=True)
-    dp = updater.dispatcher
 
     # Register handlers
     dp.add_handler(CommandHandler("start", start))
@@ -1557,6 +1520,7 @@ if __name__ == '__main__':
     threading.Thread(target=run_bot, daemon=True).start()
     # Run Flask app
     app.run(host="0.0.0.0", port=8080)
+
 
 
 
