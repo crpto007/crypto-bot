@@ -510,35 +510,35 @@ def ai_question_handler(update, context):
     except Exception as e:
         update.message.reply_text("⚠️ Sorry, AI failed to respond. Try again.")
 
-def airdrops(update: Update, context: CallbackContext):
+import requests
+
+def airdrops_command(update, context):
     try:
-        url = "https://coinmarketcap.com/airdrop/"
-        headers = {'User-Agent': 'Mozilla/5.0'}
-        res = requests.get(url, headers=headers)
-        if res.status_code != 200:
-            update.message.reply_text("❌ Failed to fetch airdrops. Try again later.")
+        # Free public airdrops API (example source)
+        url = "https://api.airdropking.io/public/api/airdrops?status=ongoing"
+        response = requests.get(url, timeout=10)
+        
+        if response.status_code != 200:
+            update.message.reply_text("⚠️ Unable to fetch airdrops right now.")
             return
-        soup = BeautifulSoup(res.text, "html.parser")
-        rows = soup.select("div.cmc-table__table-wrapper tbody tr")
-        if not rows:
-            update.message.reply_text("⚠️ No live airdrops found.")
+        
+        data = response.json()
+        if not data.get("airdrops"):
+            update.message.reply_text("🚫 No live airdrops found at the moment.")
             return
-        msg = "🎁 *Live Crypto Airdrops:*\n\n"
-        count = 0
-        for row in rows[:5]:
-            try:
-                title = row.select_one("a.cmc-link").text.strip()
-                link = "https://coinmarketcap.com" + row.select_one("a.cmc-link")['href']
-                end = row.select_one("td:nth-child(5)").text.strip()
-                msg += f"*{count+1}. {escape_md(title)}*\n🔗 [Link]({link})\n🪂 Ends: {escape_md(end)}\n\n"
-                count += 1
-            except:
-                continue
-        if count == 0:
-            msg += "No active airdrops found right now."
-        update.message.reply_text(msg, parse_mode='Markdown', disable_web_page_preview=True)
+        
+        # Create message
+        message = "💎 **Live Crypto Airdrops** 💎\n\n"
+        for drop in data["airdrops"][:5]:  # Top 5 airdrops
+            message += f"🔹 {drop['name']} ({drop['symbol']})\n"
+            message += f"🌐 Link: {drop['url']}\n"
+            message += f"🎁 Reward: {drop.get('reward', 'N/A')}\n\n"
+        
+        update.message.reply_text(message, parse_mode="Markdown")
+    
     except Exception as e:
-        update.message.reply_text("❌ Error fetching airdrop data.")
+        update.message.reply_text(f"❌ Error: {e}")
+
 
 def portfolio_command(update, context):
     user_id = str(update.effective_user.id)
@@ -1552,5 +1552,6 @@ if __name__ == '__main__':
     flask_thread = threading.Thread(target=lambda: app.run(host="0.0.0.0", port=8080))
     flask_thread.start()
     run_bot()  # Main thread में चलेगा
+
 
 
