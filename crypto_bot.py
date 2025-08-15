@@ -1465,7 +1465,9 @@ def status_command(update: Update, context: CallbackContext):
         parse_mode='Markdown'
     )
 
-
+def run_bot():
+    updater = Updater(token=BOT_TOKEN, use_context=True)
+    dp = updater.dispatcher
     # Register handlers
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("share", share))
@@ -1513,27 +1515,12 @@ def status_command(update: Update, context: CallbackContext):
     dp.add_handler(CallbackQueryHandler(dummy_handler, pattern="^quiz\|"))
     dp.add_handler(CallbackQueryHandler(dummy_handler, pattern="^(bitcoin|ethereum|dogecoin)$"))
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command, dummy_handler))
-
-    # Daily digest
-    schedule_digest(updater)
+    schedule_digest(updater)  # agar tum scheduler use कर रहे हो तो
 
     print("🤖 Bot starting...")
     updater.start_polling(drop_pending_updates=True)
-    print("✅ Bot is running!")
-    updater.idle()
-
+    updater.idle()  # ab yeh safe hai, kyunki main thread me chal raha hai
 if __name__ == '__main__':
-    # Telegram bot को अलग thread में चलाओ
-    bot_thread = threading.Thread(target=run_bot)
-    bot_thread.start()
-
-    # Flask को main thread में चलाओ
-    app.run(host="0.0.0.0", port=8080)
-
-
-
-
-
-
-
-
+    flask_thread = threading.Thread(target=lambda: app.run(host="0.0.0.0", port=8080))
+    flask_thread.start()
+    run_bot()  # Main thread में
