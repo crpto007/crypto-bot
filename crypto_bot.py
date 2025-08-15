@@ -1516,10 +1516,9 @@ def status_command(update: Update, context: CallbackContext):
 
 # --- Main ---
 if __name__ == '__main__':
-    # Run Telegram bot in a separate thread
-    threading.Thread(target=run_bot, daemon=True).start()
     # Run Flask app
-    app.run(host="0.0.0.0", port=8080)
+app.run(host="0.0.0.0", port=8080)
+
 
 
 
