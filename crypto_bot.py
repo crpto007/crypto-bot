@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 from datetime import datetime, time
 from threading import Thread
-
+import threading
 from telegram import (
     Update,
     InlineKeyboardButton,
@@ -1514,9 +1514,14 @@ def status_command(update: Update, context: CallbackContext):
     print("✅ Bot is running!")
     updater.idle()
 
-# --- Main ---
 if __name__ == '__main__':
+    # Telegram bot को अलग thread में चलाओ
+    bot_thread = threading.Thread(target=run_bot)
+    bot_thread.start()
+
+    # Flask को main thread में चलाओ
     app.run(host="0.0.0.0", port=8080)
+
 
 
 
