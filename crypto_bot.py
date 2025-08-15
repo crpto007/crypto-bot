@@ -1464,7 +1464,30 @@ def status_command(update: Update, context: CallbackContext):
         f"✅ Bot is *LIVE* and responding!\n\nYour User ID: `{user_id}`",
         parse_mode='Markdown'
     )
+def auto_btc(update, context):
+    chat_id = update.effective_chat.id
+    if chat_id in auto_btc_users:
+        update.message.reply_text("⚠️ Auto BTC पहले से चालू है!")
+        return
+    
+    auto_btc_users[chat_id] = True
+    update.message.reply_text("✅ Auto BTC चालू कर दिया गया है! हर 1 मिनट में price भेजी जाएगी।")
+    
+    def send_price():
+        while auto_btc_users.get(chat_id, False):
+            price = get_btc_price()
+            context.bot.send_message(chat_id=chat_id, text=f"💰 BTC Price: ${price}")
+            time.sleep(60)  # हर 1 मिनट बाद price भेजना
+    
+    threading.Thread(target=send_price, daemon=True).start()
 
+def stop_btc(update, context):
+    chat_id = update.effective_chat.id
+    if chat_id in auto_btc_users:
+        auto_btc_users[chat_id] = False
+        update.message.reply_text("🛑 Auto BTC बंद कर दिया गया है।")
+    else:
+        update.message.reply_text("⚠️ Auto BTC अभी चालू नहीं था।")
 def run_bot():
     updater = Updater(token=BOT_TOKEN, use_context=True)
     dp = updater.dispatcher
@@ -1529,4 +1552,5 @@ if __name__ == '__main__':
     flask_thread = threading.Thread(target=lambda: app.run(host="0.0.0.0", port=8080))
     flask_thread.start()
     run_bot()  # Main thread में चलेगा
+
 
