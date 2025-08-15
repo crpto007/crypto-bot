@@ -47,8 +47,8 @@ matplotlib.use('Agg')  # Non-interactive backend
 
 # ----------------- Load Environment Variables -----------------
 load_dotenv()
-BOT_TOKEN = os.getenv("BOT_TOKEN")
 openai.api_key = os.getenv("OPENAI_API_KEY")
+BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 
 # ----------------- Logging -----------------
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -1557,5 +1557,6 @@ if __name__ == '__main__':
     threading.Thread(target=run_bot, daemon=True).start()
     # Run Flask app
     app.run(host="0.0.0.0", port=8080)
+
 
 
