@@ -33,6 +33,9 @@ from dotenv import load_dotenv
 import openai
 from threading import Thread
 
+updater = Updater(token=BOT_TOKEN, use_context=True)
+dp = updater.dispatcher
+
 # Your Flask app
 app = Flask(__name__)
 
@@ -1551,6 +1554,3 @@ def run_bot():
 if __name__ == '__main__':
     updater.start_polling(drop_pending_updates=True)
     app.run(host="0.0.0.0", port=8080)
-
-
-
