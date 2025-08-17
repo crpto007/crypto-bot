@@ -1549,9 +1549,9 @@ def run_bot():
 
 
 if __name__ == '__main__':
-    flask_thread = threading.Thread(target=lambda: app.run(host="0.0.0.0", port=8080))
-    flask_thread.start()
-    run_bot()  # Main thread में चलेगा
+    threading.Thread(target=lambda: app.run(host="0.0.0.0", port=8080)).start()
+    run_bot()  # bot main thread में
+
 
 
 
