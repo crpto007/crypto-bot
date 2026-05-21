@@ -1552,11 +1552,11 @@ updater.start_webhook(
     listen="0.0.0.0",
     port=PORT,
     url_path=BOT_TOKEN,
-    webhook_url=f"https://crypto-bot.vercel.app/{BOT_TOKEN}"
+    webhook_url=f"https://crypto-bot-lime.vercel.app//{BOT_TOKEN}"
 )
 
 updater.bot.set_webhook(
-    f"https://crypto-bot.vercel.app/{BOT_TOKEN}"
+    f"https://crypto-bot-lime.vercel.app//{BOT_TOKEN}"
 )
 
 updater.idle()
