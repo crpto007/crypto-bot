@@ -48,7 +48,8 @@ matplotlib.use('Agg')  # Non-interactive backend
 # ----------------- Load Environment Variables -----------------
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
-BOT_TOKEN = "8186060522:AAEkX7GKRlN-CeDro-Jn7FBtR7S2BxDWD9o"
+
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 # ----------------- Logging -----------------
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -78,9 +79,9 @@ def run_bot():
     # yaha pe saare handlers add karo...
     schedule_digest(updater)
     print("🤖 Bot starting...")
-    updater.start_polling(drop_pending_updates=True)
+    #updater.start_polling(drop_pending_updates=True)
     print("✅ Bot is running!")
-    updater.idle()
+    #updater.idle()
 # ----------------- Utility Functions -----------------
 def ensure_user_data(user_id):
     if user_id not in user_data:
@@ -1535,7 +1536,7 @@ def run_bot():
     dp.add_handler(CommandHandler("watch", watch_command))
     dp.add_handler(CommandHandler("clearwatch", clear_watchlist))
     dp.add_handler(CommandHandler("removewatch", remove_watch))
-    dp.add_handler(CommandHandler("quiz", quiz_command))
+    dp.add_handler(CallbackQueryHandler(quiz_response, pattern=r"^quiz\|"))
 
     dp.add_handler(CallbackQueryHandler(quiz_response, pattern="^quiz\|"))
     dp.add_handler(CallbackQueryHandler(coin_button_handler, pattern="^(bitcoin|ethereum|dogecoin)$"))
@@ -1543,15 +1544,23 @@ def run_bot():
     # Scheduler
     schedule_digest(updater)
 
-    print("🤖 Bot starting...")
-    updater.start_polling(drop_pending_updates=True)
-    updater.idle()
+    print("🤖 Bot starting on Vercel Webhook...")
+
+PORT = int(os.environ.get("PORT", 8080))
+
+updater.start_webhook(
+    listen="0.0.0.0",
+    port=PORT,
+    url_path=BOT_TOKEN,
+    webhook_url=f"https://crypto-bot.vercel.app/{BOT_TOKEN}"
+)
+
+updater.bot.set_webhook(
+    f"https://crypto-bot.vercel.app/{BOT_TOKEN}"
+)
+
+updater.idle()
 
 
 if __name__ == '__main__':
-    threading.Thread(target=lambda: app.run(host="0.0.0.0", port=8080)).start()
-    run_bot()  # bot main thread में
-
-
-
-
+    run_bot()
