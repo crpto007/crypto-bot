@@ -62,7 +62,12 @@ dp = updater.dispatcher
 
 # ----------------- Flask App -----------------
 app = Flask(__name__)
-
+@app.route("/")
+def home():
+    return {
+        "status": "online",
+        "bot": "Crypto Bot Running 🚀"
+    }
 # ----------------- Global Data Stores -----------------
 user_watchlist = {}
 auto_reply_users = set()
