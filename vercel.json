@@ -2,14 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "crypto-bot-main/crypto_bot.py",
+      "src": "crypto_bot.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "crypto-bot-main/crypto_bot.py"
+      "dest": "crypto_bot.py"
     }
   ]
 }

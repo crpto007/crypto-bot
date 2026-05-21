@@ -63,7 +63,6 @@ dp = updater.dispatcher
 # ----------------- Flask App -----------------
 app = Flask(__name__)
 @app.route("/")
-@app.route("/")
 def home():
     return "Crypto Bot Running 🚀"
 # ----------------- Global Data Stores -----------------
@@ -1483,7 +1482,7 @@ def auto_btc(update, context):
             context.bot.send_message(chat_id=chat_id, text=f"💰 BTC Price: ${price}")
             time.sleep(60)  # हर 1 मिनट बाद price भेजना
     
-    threading.Thread(target=send_price, daemon=True).start()
+#
 
 def stop_btc(update, context):
     chat_id = update.effective_chat.id
