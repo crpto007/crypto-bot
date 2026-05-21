@@ -57,8 +57,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 # ----------------- Telegram Bot Setup -----------------
-updater = Updater(token=BOT_TOKEN, use_context=True)
-dp = updater.dispatcher
+ 
 
 # ----------------- Flask App -----------------
 app = Flask(__name__)
@@ -78,12 +77,6 @@ user_data = {}  # Moved before ensure_user_data
 def run_bot():
     updater = Updater(token=BOT_TOKEN, use_context=True)
     dp = updater.dispatcher
-    # yaha pe saare handlers add karo...
-    schedule_digest(updater)
-    print("🤖 Bot starting...")
-    #updater.start_polling(drop_pending_updates=True)
-    print("✅ Bot is running!")
-    #updater.idle()
 # ----------------- Utility Functions -----------------
 def ensure_user_data(user_id):
     if user_id not in user_data:
@@ -95,7 +88,7 @@ def ensure_user_data(user_id):
 
 # ----------------- Scheduler -----------------
 scheduler = BackgroundScheduler(timezone=utc)
-scheduler.start()
+#scheduler.start()
 btc_job = None
 
 # ----------------- Quiz Questions -----------------
@@ -837,7 +830,7 @@ logger = logging.getLogger(__name__)
 # ===== Global Variables =====
 real_time_graphs = {}
 scheduler = BackgroundScheduler()
-scheduler.start()
+#scheduler.start()
 
 # ===== Example placeholder for get_price function =====
 def get_price(coin):
@@ -1492,8 +1485,8 @@ def stop_btc(update, context):
     else:
         update.message.reply_text("⚠️ Auto BTC अभी चालू नहीं था।")
 def run_bot():
-    updater = Updater(token=BOT_TOKEN, use_context=True)
-    dp = updater.dispatcher
+     
+     
 
     # Register handlers
     dp.add_handler(CommandHandler("start", start))
